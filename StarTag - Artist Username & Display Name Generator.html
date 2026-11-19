@@ -1,0 +1,3042 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>StarTag – Artist Username & Display Name Generator</title>
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & THEME VARIABLES (ANDROID MATERIAL 3 INSPIRED)
+       ========================================================================== */
+    :root {
+      --bg-primary: #0f1117;
+      --bg-secondary: #181b24;
+      --bg-tertiary: #222634;
+      --bg-elevated: #2a2f40;
+      --text-primary: #f3f4f8;
+      --text-secondary: #a0a6b8;
+      --text-muted: #6c738a;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --accent-soft: rgba(139, 92, 246, 0.16);
+      --accent-text: #ffffff;
+      --success: #10b981;
+      --success-soft: rgba(16, 185, 129, 0.15);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.15);
+      --warning: #f59e0b;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-full: 9999px;
+      --font-scale: 1;
+      --nav-height: 68px;
+      --header-height: 60px;
+    }
+
+    /* Tema AMOLED */
+    html.theme-amoled {
+      --bg-primary: #000000;
+      --bg-secondary: #0a0a0c;
+      --bg-tertiary: #141418;
+      --bg-elevated: #1e1e24;
+      --border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Tema Terang */
+    html.theme-light {
+      --bg-primary: #f4f6fb;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #eef1f8;
+      --bg-elevated: #e2e6f0;
+      --text-primary: #111827;
+      --text-secondary: #4b5563;
+      --text-muted: #9ca3af;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Reset & Base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: calc(15px * var(--font-scale));
+      line-height: 1.5;
+      overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* ==========================================================================
+       2. APP SHELL & LAYOUT
+       ========================================================================== */
+    .app-container {
+      max-width: 540px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background-color: var(--bg-primary);
+      position: relative;
+      padding-top: var(--header-height);
+      padding-bottom: calc(var(--nav-height) + 20px);
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Top App Bar */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 540px;
+      height: var(--header-height);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #ec4899);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 3px 10px var(--accent-soft);
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-badge {
+      font-size: 0.68rem;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Bottom Navigation Bar (5 Tabs) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 540px;
+      height: var(--nav-height);
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .nav-item {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.2s ease;
+    }
+
+    .nav-item svg {
+      width: 22px;
+      height: 22px;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+    }
+
+    .nav-item.active .nav-pill {
+      background: var(--accent-soft);
+      padding: 3px 14px;
+      border-radius: var(--radius-full);
+    }
+
+    .nav-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 14px;
+      border-radius: var(--radius-full);
+      transition: background 0.2s ease;
+    }
+
+    .nav-badge {
+      position: absolute;
+      top: 6px;
+      right: 22%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.62rem;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 99px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    /* ==========================================================================
+       3. COMPONENTS & CONTROLS
+       ========================================================================== */
+    .tab-view {
+      display: none;
+      padding: 16px;
+      animation: fadeSlideIn 0.28s ease forwards;
+    }
+
+    .tab-view.active {
+      display: block;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Buttons & Ripple */
+    .btn {
+      position: relative;
+      overflow: hidden;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.12s ease, background-color 0.2s ease, opacity 0.2s ease;
+      user-select: none;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: var(--accent-text);
+      padding: 15px 20px;
+      font-size: 1rem;
+      width: 100%;
+      box-shadow: 0 6px 18px var(--accent-soft);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      padding: 11px 15px;
+      font-size: 0.88rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-sm {
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.15s ease;
+    }
+
+    .btn-icon:active { transform: scale(0.92); }
+    .btn-icon.active-fav { color: #f43f5e; background: rgba(244, 63, 94, 0.15); border-color: rgba(244, 63, 94, 0.3); }
+    .btn-icon.active-lock { color: var(--warning); background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); }
+
+    /* Ripple span */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      transform: scale(0);
+      animation: rippleAnim 0.55s linear;
+      background-color: rgba(255, 255, 255, 0.28);
+      pointer-events: none;
+    }
+
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .input-field, .select-field {
+      width: 100%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .input-field:focus, .select-field:focus {
+      border-color: var(--accent);
+    }
+
+    /* Chips / Pills */
+    .chip-scroll {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      padding: 7px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+
+    .chip.selected {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Switch Toggle */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .switch-row:last-child { border-bottom: none; }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: var(--bg-elevated);
+      transition: 0.25s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #fff;
+      transition: 0.25s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider { background-color: var(--accent); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* ==========================================================================
+       4. RESULT CARDS & SKELETON
+       ========================================================================== */
+    .result-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 13px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      animation: cardPop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transition: border-color 0.2s ease;
+    }
+
+    .result-card.locked {
+      border-color: var(--warning);
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.06), var(--bg-secondary));
+    }
+
+    @keyframes cardPop {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .result-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .result-text {
+      font-size: 1.04rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      word-break: break-all;
+      margin-bottom: 4px;
+    }
+
+    .result-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+
+    .tag-pill {
+      background: var(--bg-tertiary);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .status-valid {
+      background: var(--success-soft);
+      color: var(--success);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    .status-invalid {
+      background: var(--danger-soft);
+      color: var(--danger);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    /* Skeleton Loader */
+    .skeleton {
+      height: 68px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.1s infinite;
+      margin-bottom: 10px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ==========================================================================
+       5. PROFILE MOCKUP (DISPLAY NAME PREVIEW)
+       ========================================================================== */
+    .profile-mockup {
+      background: linear-gradient(145deg, var(--bg-tertiary), var(--bg-secondary));
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .mockup-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .mockup-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #ec4899, #f59e0b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      border: 2px solid var(--bg-primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .mockup-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mockup-display {
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .mockup-handle {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .mockup-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+    }
+
+    .mockup-stats strong {
+      color: var(--text-primary);
+      font-size: 0.85rem;
+    }
+
+    /* ==========================================================================
+       6. STATS GRID, ACCORDION, MODAL & TOAST
+       ========================================================================== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .stat-lbl {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .hero-banner {
+      background: linear-gradient(135deg, var(--accent), #6d28d9 60%, #be185d);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      color: #fff;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-banner h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .hero-banner p {
+      font-size: 0.84rem;
+      opacity: 0.92;
+      margin-bottom: 14px;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.28);
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    /* Accordion */
+    .accordion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .accordion-body {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .accordion-body.open {
+      display: block;
+    }
+
+    /* Modal / Drawer */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 540px;
+      max-height: 88vh;
+      background: var(--bg-secondary);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 20px;
+      overflow-y: auto;
+      animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--nav-height) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1f2937;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Color Swatches */
+    .swatch-list {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .swatch.active {
+      border-color: #fff;
+      transform: scale(1.12);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    /* Artist Explorer Item */
+    .artist-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- TOP APP BAR -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">★</div>
+      <div>
+        <div class="brand-title">StarTag <span class="brand-badge">PRO</span></div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="btnOpenHistory" title="Riwayat" aria-label="Riwayat">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </button>
+      <button class="btn-icon" id="btnOpenAbout" title="Tentang" aria-label="Tentang">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </button>
+      <button class="btn-icon" id="btnOpenSettings" title="Pengaturan" aria-label="Pengaturan">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       TAB 1: BERANDA (HOME)
+       ======================================================================== -->
+  <main id="tab-home" class="tab-view active">
+    <div class="hero-banner">
+      <h2 data-i18n="heroTitle">Identitas Digital Ala Bintang</h2>
+      <p data-i18n="heroDesc">Buat username & display name estetik dari ratusan musisi dunia dan Indonesia tanpa nama kembar.</p>
+      <div class="hero-pill">
+        <span>🎵</span>
+        <span id="uniqueArtistCounter">Total artis unik: 0</span>
+      </div>
+    </div>
+
+    <!-- Statistik Cepat -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="statGenerated">0</div>
+        <div class="stat-lbl" data-i18n="statGen">Nama Dibuat</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statFavorites">0</div>
+        <div class="stat-lbl" data-i18n="statFav">Favorit</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statTopArtist" style="font-size:0.95rem; padding-top:4px;">-</div>
+        <div class="stat-lbl" data-i18n="statTop">Artis Terfavorit</div>
+      </div>
+    </div>
+
+    <!-- Aksi Cepat -->
+    <div class="grid-2" style="margin-bottom: 14px;">
+      <button class="btn btn-primary" onclick="switchTab('username')" style="padding:14px 12px; font-size:0.9rem;">
+        <span>⚡</span> <span data-i18n="quickUser">Buat Username</span>
+      </button>
+      <button class="btn btn-secondary" onclick="switchTab('display')" style="padding:14px 12px; font-size:0.9rem;">
+        <span>✨</span> <span data-i18n="quickDisp">Display Name</span>
+      </button>
+    </div>
+
+    <!-- Tantangan Harian -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔥 <span data-i18n="dailyTitle">Tantangan Harian</span></div>
+        <span class="tag-pill" id="dailyDateBadge">Hari Ini</span>
+      </div>
+      <div style="background: var(--bg-tertiary); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);">Artis Pilihan Hari Ini:</div>
+          <div style="font-size:1.1rem; font-weight:800; color:var(--accent);" id="dailyArtistName">-</div>
+          <div style="font-size:0.74rem; color:var(--text-muted);" id="dailyArtistMeta">-</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btnRefreshDaily">5 Ide Baru</button>
+      </div>
+      <div id="dailyResultsList"></div>
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       TAB 2: GENERATOR USERNAME
+       ======================================================================== -->
+  <main id="tab-username" class="tab-view">
+    <div class="card">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select id="platformSelect" class="select-field">
+            <option value="instagram">Instagram (Maks 30)</option>
+            <option value="tiktok">TikTok (Maks 24)</option>
+            <option value="roblox">Roblox (3-20, tanpa titik)</option>
+            <option value="discord">Discord (2-32)</option>
+            <option value="youtube">YouTube (3-30)</option>
+            <option value="twitter">X / Twitter (4-15)</option>
+            <option value="freefire">Free Fire (3-12)</option>
+            <option value="mlbb">Mobile Legends (4-20)</option>
+            <option value="minecraft">Minecraft (3-16, _ saja)</option>
+            <option value="general">Umum (3-30)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Era Artis</label>
+          <select id="eraSelect" class="select-field">
+            <option value="ALL">Semua Era</option>
+            <option value="2020s">2020-an (Gen Z)</option>
+            <option value="2010s">2010-an</option>
+            <option value="2000s">2000-an</option>
+            <option value="90s">90-an</option>
+            <option value="Classic">Klasik / Legenda</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          <span>Nama Kamu / Kata Favorit (Opsional)</span>
+          <span id="lockedArtistBadge" style="color:var(--accent); font-weight:700;"></span>
+        </label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="customWordInput" class="input-field" placeholder="Contoh: Raka, Luna, 07, Star...">
+          <button class="btn btn-secondary btn-sm" id="btnClearForcedArtist" style="display:none; white-space:nowrap;">Reset Artis</button>
+        </div>
+      </div>
+
+      <!-- Filter Kategori Multi-Pilih -->
+      <div class="form-group">
+        <div class="form-label">
+          <span>Kategori Artis</span>
+          <span id="catSelectAll" style="color:var(--accent); cursor:pointer;">Acak dari semua</span>
+        </div>
+        <div class="chip-scroll" id="categoryChips"></div>
+      </div>
+
+      <!-- Pengaturan Lanjutan (Accordion) -->
+      <div style="border-top:1px solid var(--border-color); padding-top:10px; margin-top:8px;">
+        <div class="accordion-header" id="toggleAdvOptions">
+          <span>⚙️ Pengaturan Aturan Karakter</span>
+          <span id="advArrow">▼</span>
+        </div>
+        <div class="accordion-body" id="advOptionsBody">
+          <div class="grid-2" style="margin-bottom:8px;">
+            <div>
+              <label class="form-label">Min Karakter: <span id="minLenVal">4</span></label>
+              <input type="range" id="minLenRange" min="3" max="15" value="4" style="width:100%;">
+            </div>
+            <div>
+              <label class="form-label">Maks Karakter: <span id="maxLenVal">24</span></label>
+              <input type="range" id="maxLenRange" min="8" max="32" value="24" style="width:100%;">
+            </div>
+          </div>
+          <div class="switch-row">
+            <span>Izinkan Angka Aksen (Opsional)</span>
+            <label class="switch"><input type="checkbox" id="optNumbers" checked><span class="slider"></span></label>
+          </div>
+          <div class="switch-row">
+            <span>Izinkan Titik & Underscore (. / _)</span>
+            <label class="switch"><input type="checkbox" id="optSeparators" checked><span class="slider"></span></label>
+          </div>
+          <div class="switch-row">
+            <span>Huruf Kecil Semua (lowercase)</span>
+            <label class="switch"><input type="checkbox" id="optLowercase" checked><span class="slider"></span></label>
+          </div>
+          <div class="switch-row">
+            <span>Leet Speak Ringan (a→4, e→3, o→0)</span>
+            <label class="switch"><input type="checkbox" id="optLeet"><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tombol Generate Besar -->
+    <button class="btn btn-primary" id="btnGenerateUsernames" style="margin-bottom: 14px;">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      <span>Generate 10 Username Unik</span>
+    </button>
+
+    <!-- Daftar Hasil Username -->
+    <div id="usernameResultsContainer"></div>
+  </main>
+
+  <!-- ========================================================================
+       TAB 3: GENERATOR DISPLAY NAME
+       ======================================================================== -->
+  <main id="tab-display" class="tab-view">
+    <!-- Pratinjau Profil Tiruan -->
+    <div class="profile-mockup">
+      <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">
+        📱 Pratinjau Profil Sosmed
+      </div>
+      <div class="mockup-top">
+        <div class="mockup-avatar" id="mockupAvatar">★</div>
+        <div class="mockup-details">
+          <div class="mockup-display" id="mockupDisplayName">✦ ᴛᴀʏʟᴏʀ ᴠɪʙᴇꜱ ☾</div>
+          <div class="mockup-handle" id="mockupUsername">@taylor.vibes</div>
+        </div>
+      </div>
+      <div class="mockup-stats">
+        <span><strong>142</strong> Postingan</span>
+        <span><strong>24.8K</strong> Pengikut</span>
+        <span><strong>310</strong> Mengikuti</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Teks Dasar / Nama Artis / Nama Kamu</label>
+        <input type="text" id="displayBaseInput" class="input-field" placeholder="Kosongkan untuk acak otomatis dari artis...">
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Gaya Display Name</label>
+          <select id="displayStyleSelect" class="select-field">
+            <option value="aesthetic">Aesthetic</option>
+            <option value="cute">Cute / Gemoy</option>
+            <option value="dark">Dark / Edgy</option>
+            <option value="elegan">Elegan / Luxury</option>
+            <option value="gamer">Gamer / Pro</option>
+            <option value="minimalis">Minimalis</option>
+            <option value="kpop">K-Pop Style</option>
+            <option value="lucu">Lucu / Santai</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Font Unicode</label>
+          <select id="unicodeFontSelect" class="select-field">
+            <option value="normal">Normal / Campuran</option>
+            <option value="smallcaps">ꜱᴍᴀʟʟ ᴄᴀᴘꜱ</option>
+            <option value="bold">𝐁𝐨𝐥𝐝 𝐒𝐞𝐫𝐢𝐟</option>
+            <option value="sansbold">𝗕𝗼𝗹𝗱 𝗦𝗮𝗻𝘀</option>
+            <option value="italic">𝘐𝘵𝘢𝘭𝘪𝘤</option>
+            <option value="script">𝓢𝓬𝓻𝓲𝓹𝓽 𝓒𝓾𝓻𝓼𝓲𝓿𝓮</option>
+            <option value="gothic">𝔊𝔬𝔱𝔥𝔦𝔠 𝔉𝔯𝔞𝔨𝔱𝔲𝔯</option>
+            <option value="doublestruck">𝔻𝕠𝕦𝕓𝕝𝕖-𝕊𝕥𝕣𝕦𝕔𝕜</option>
+            <option value="bubble">Ⓑⓤⓑⓑⓛⓔ</option>
+            <option value="fullwidth">Ｆｕｌｌｗｉｄｔｈ</option>
+            <option value="monospace">𝙼𝚘𝚗𝚘𝚜𝚙𝚊𝚌𝚎</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="switch-row">
+        <span>Hiasan Simbol & Emoji (✦ ☾ 𓆩 𓆪)</span>
+        <label class="switch"><input type="checkbox" id="optDecorations" checked><span class="slider"></span></label>
+      </div>
+      <div class="form-group" style="margin-top:8px; margin-bottom:0;">
+        <label class="form-label">Intensitas Dekorasi: <span id="decoIntensityLabel">Sedang</span></label>
+        <input type="range" id="decoIntensityRange" min="1" max="3" value="2" style="width:100%;">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btnGenerateDisplay" style="margin-bottom: 14px;">
+      <span>✨ Generate 10 Display Name</span>
+    </button>
+
+    <div id="displayResultsContainer"></div>
+  </main>
+
+  <!-- ========================================================================
+       TAB 4: JELAJAH ARTIS (EXPLORE)
+       ======================================================================== -->
+  <main id="tab-explore" class="tab-view">
+    <div class="card">
+      <div class="form-group">
+        <input type="search" id="artistSearchInput" class="input-field" placeholder="🔍 Cari dari 580+ nama artis...">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <select id="exploreCategoryFilter" class="select-field">
+          <option value="ALL">Semua Kategori</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 4px;">
+      <span style="font-size:0.82rem; color:var(--text-secondary);" id="exploreCountLabel">Menampilkan 0 artis</span>
+      <button class="btn btn-secondary btn-sm" id="btnRandomArtistExplore">🎲 Pilih Acak</button>
+    </div>
+
+    <div id="artistListContainer"></div>
+    <button class="btn btn-secondary" id="btnLoadMoreArtists" style="width:100%; margin-top:8px;">Muat Lebih Banyak</button>
+  </main>
+
+  <!-- ========================================================================
+       TAB 5: FAVORIT (FAVORITES)
+       ======================================================================== -->
+  <main id="tab-favorites" class="tab-view">
+    <div class="card">
+      <div class="card-header" style="margin-bottom:8px;">
+        <div class="card-title">❤️ Koleksi Favorit Tersimpan</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" id="btnExportTxt">📄 Ekspor .TXT</button>
+        <button class="btn btn-secondary btn-sm" id="btnExportCsv">📊 Ekspor .CSV</button>
+        <button class="btn btn-secondary btn-sm" id="btnImportTxt">📥 Impor .TXT</button>
+        <input type="file" id="importFileInput" accept=".txt" style="display:none;">
+      </div>
+    </div>
+
+    <div id="favoritesListContainer"></div>
+  </main>
+
+  <!-- ========================================================================
+       BOTTOM NAVIGATION BAR (5 TABS)
+       ======================================================================== -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="home">
+      <div class="nav-pill">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+      <span data-i18n="navHome">Beranda</span>
+    </button>
+    <button class="nav-item" data-tab="username">
+      <div class="nav-pill">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      </div>
+      <span data-i18n="navUser">Username</span>
+    </button>
+    <button class="nav-item" data-tab="display">
+      <div class="nav-pill">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+      </div>
+      <span data-i18n="navDisp">Display</span>
+    </button>
+    <button class="nav-item" data-tab="explore">
+      <div class="nav-pill">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <span data-i18n="navExplore">Jelajah</span>
+    </button>
+    <button class="nav-item" data-tab="favorites">
+      <div class="nav-pill">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+      </div>
+      <span class="nav-badge" id="favNavBadge">0</span>
+      <span data-i18n="navFav">Favorit</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ==========================================================================
+     MODALS (SETTINGS, HISTORY, ABOUT, PAIR MODAL)
+     ========================================================================== -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal-sheet" id="modalContent"></div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div class="toast" id="toastBox">✓ Tersalin ke clipboard</div>
+
+<script>
+/* ============================================================================
+   BAGIAN 1: DATABASE NAMA ARTIS LENGKAP (580+ ARTIS UNIK LINTAS KATEGORI)
+   ============================================================================ */
+const RAW_ARTISTS = [
+  // --- 1. K-POP (85 Artis) ---
+  {name: "BTS", cat: "K-Pop", era: "2010s"},
+  {name: "BLACKPINK", cat: "K-Pop", era: "2010s"},
+  {name: "EXO", cat: "K-Pop", era: "2010s"},
+  {name: "TWICE", cat: "K-Pop", era: "2010s"},
+  {name: "SEVENTEEN", cat: "K-Pop", era: "2010s"},
+  {name: "Stray Kids", cat: "K-Pop", era: "2020s"},
+  {name: "NCT 127", cat: "K-Pop", era: "2010s"},
+  {name: "NCT DREAM", cat: "K-Pop", era: "2010s"},
+  {name: "WayV", cat: "K-Pop", era: "2020s"},
+  {name: "Red Velvet", cat: "K-Pop", era: "2010s"},
+  {name: "aespa", cat: "K-Pop", era: "2020s"},
+  {name: "NewJeans", cat: "K-Pop", era: "2020s"},
+  {name: "IVE", cat: "K-Pop", era: "2020s"},
+  {name: "LE SSERAFIM", cat: "K-Pop", era: "2020s"},
+  {name: "ITZY", cat: "K-Pop", era: "2020s"},
+  {name: "TXT", cat: "K-Pop", era: "2020s"},
+  {name: "ENHYPEN", cat: "K-Pop", era: "2020s"},
+  {name: "ATEEZ", cat: "K-Pop", era: "2020s"},
+  {name: "TREASURE", cat: "K-Pop", era: "2020s"},
+  {name: "BABYMONSTER", cat: "K-Pop", era: "2020s"},
+  {name: "ILLIT", cat: "K-Pop", era: "2020s"},
+  {name: "RIIZE", cat: "K-Pop", era: "2020s"},
+  {name: "ZEROBASEONE", cat: "K-Pop", era: "2020s"},
+  {name: "BOYNEXTDOOR", cat: "K-Pop", era: "2020s"},
+  {name: "TWS", cat: "K-Pop", era: "2020s"},
+  {name: "KISS OF LIFE", cat: "K-Pop", era: "2020s"},
+  {name: "NMIXX", cat: "K-Pop", era: "2020s"},
+  {name: "STAYC", cat: "K-Pop", era: "2020s"},
+  {name: "G-IDLE", cat: "K-Pop", era: "2020s"},
+  {name: "MAMAMOO", cat: "K-Pop", era: "2010s"},
+  {name: "GOT7", cat: "K-Pop", era: "2010s"},
+  {name: "MONSTA X", cat: "K-Pop", era: "2010s"},
+  {name: "iKON", cat: "K-Pop", era: "2010s"},
+  {name: "WINNER", cat: "K-Pop", era: "2010s"},
+  {name: "BIGBANG", cat: "K-Pop", era: "2000s"},
+  {name: "2NE1", cat: "K-Pop", era: "2010s"},
+  {name: "Girls Generation", cat: "K-Pop", era: "2000s"},
+  {name: "Super Junior", cat: "K-Pop", era: "2000s"},
+  {name: "SHINee", cat: "K-Pop", era: "2000s"},
+  {name: "TVXQ", cat: "K-Pop", era: "2000s"},
+  {name: "KARA", cat: "K-Pop", era: "2000s"},
+  {name: "Wonder Girls", cat: "K-Pop", era: "2000s"},
+  {name: "f(x)", cat: "K-Pop", era: "2010s"},
+  {name: "Apink", cat: "K-Pop", era: "2010s"},
+  {name: "GFRIEND", cat: "K-Pop", era: "2010s"},
+  {name: "LOONA", cat: "K-Pop", era: "2010s"},
+  {name: "Dreamcatcher", cat: "K-Pop", era: "2010s"},
+  {name: "EVERGLOW", cat: "K-Pop", era: "2020s"},
+  {name: "Kep1er", cat: "K-Pop", era: "2020s"},
+  {name: "fromis_9", cat: "K-Pop", era: "2010s"},
+  {name: "THE BOYZ", cat: "K-Pop", era: "2020s"},
+  {name: "ASTRO", cat: "K-Pop", era: "2010s"},
+  {name: "SF9", cat: "K-Pop", era: "2010s"},
+  {name: "PENTAGON", cat: "K-Pop", era: "2010s"},
+  {name: "BTOB", cat: "K-Pop", era: "2010s"},
+  {name: "DAY6", cat: "K-Pop", era: "2010s"},
+  {name: "Xdinary Heroes", cat: "K-Pop", era: "2020s"},
+  {name: "IU", cat: "K-Pop", era: "2010s"},
+  {name: "Taeyeon", cat: "K-Pop", era: "2010s"},
+  {name: "Baekhyun", cat: "K-Pop", era: "2010s"},
+  {name: "Jungkook", cat: "K-Pop", era: "2020s"},
+  {name: "Jimin", cat: "K-Pop", era: "2020s"},
+  {name: "Taehyung", cat: "K-Pop", era: "2020s"},
+  {name: "Suga", cat: "K-Pop", era: "2020s"},
+  {name: "Jin", cat: "K-Pop", era: "2020s"},
+  {name: "J-Hope", cat: "K-Pop", era: "2020s"},
+  {name: "Jennie", cat: "K-Pop", era: "2020s"},
+  {name: "Lisa", cat: "K-Pop", era: "2020s"},
+  {name: "Rose", cat: "K-Pop", era: "2020s"},
+  {name: "Jisoo", cat: "K-Pop", era: "2020s"},
+  {name: "G-Dragon", cat: "K-Pop", era: "2010s"},
+  {name: "Taeyang", cat: "K-Pop", era: "2010s"},
+  {name: "Zico", cat: "K-Pop", era: "2010s"},
+  {name: "Jay Park", cat: "K-Pop", era: "2010s"},
+  {name: "DEAN", cat: "K-Pop", era: "2010s"},
+  {name: "Crush", cat: "K-Pop", era: "2010s"},
+  {name: "Heize", cat: "K-Pop", era: "2010s"},
+  {name: "Sunmi", cat: "K-Pop", era: "2010s"},
+  {name: "Chungha", cat: "K-Pop", era: "2010s"},
+  {name: "HyunA", cat: "K-Pop", era: "2010s"},
+  {name: "Somi", cat: "K-Pop", era: "2020s"},
+  {name: "BIBI", cat: "K-Pop", era: "2020s"},
+  {name: "Lee Hi", cat: "K-Pop", era: "2010s"},
+  {name: "AKMU", cat: "K-Pop", era: "2010s"},
+  {name: "BOL4", cat: "K-Pop", era: "2010s"},
+
+  // --- 2. POP BARAT (85 Artis) ---
+  {name: "Taylor Swift", cat: "Pop Barat", era: "2010s"},
+  {name: "Ariana Grande", cat: "Pop Barat", era: "2010s"},
+  {name: "Justin Bieber", cat: "Pop Barat", era: "2010s"},
+  {name: "Billie Eilish", cat: "Pop Barat", era: "2020s"},
+  {name: "Olivia Rodrigo", cat: "Pop Barat", era: "2020s"},
+  {name: "Sabrina Carpenter", cat: "Pop Barat", era: "2020s"},
+  {name: "Chappell Roan", cat: "Pop Barat", era: "2020s"},
+  {name: "Dua Lipa", cat: "Pop Barat", era: "2020s"},
+  {name: "Harry Styles", cat: "Pop Barat", era: "2020s"},
+  {name: "One Direction", cat: "Pop Barat", era: "2010s"},
+  {name: "Ed Sheeran", cat: "Pop Barat", era: "2010s"},
+  {name: "Shawn Mendes", cat: "Pop Barat", era: "2010s"},
+  {name: "Camila Cabello", cat: "Pop Barat", era: "2010s"},
+  {name: "Selena Gomez", cat: "Pop Barat", era: "2010s"},
+  {name: "Miley Cyrus", cat: "Pop Barat", era: "2010s"},
+  {name: "Demi Lovato", cat: "Pop Barat", era: "2010s"},
+  {name: "Katy Perry", cat: "Pop Barat", era: "2010s"},
+  {name: "Lady Gaga", cat: "Pop Barat", era: "2010s"},
+  {name: "Rihanna", cat: "Pop Barat", era: "2010s"},
+  {name: "Beyonce", cat: "Pop Barat", era: "2000s"},
+  {name: "Bruno Mars", cat: "Pop Barat", era: "2010s"},
+  {name: "Adele", cat: "Pop Barat", era: "2010s"},
+  {name: "Sam Smith", cat: "Pop Barat", era: "2010s"},
+  {name: "Charlie Puth", cat: "Pop Barat", era: "2010s"},
+  {name: "Zayn Malik", cat: "Pop Barat", era: "2010s"},
+  {name: "Niall Horan", cat: "Pop Barat", era: "2020s"},
+  {name: "Louis Tomlinson", cat: "Pop Barat", era: "2020s"},
+  {name: "Liam Payne", cat: "Pop Barat", era: "2010s"},
+  {name: "Lana Del Rey", cat: "Pop Barat", era: "2010s"},
+  {name: "Lorde", cat: "Pop Barat", era: "2010s"},
+  {name: "Halsey", cat: "Pop Barat", era: "2010s"},
+  {name: "Melanie Martinez", cat: "Pop Barat", era: "2010s"},
+  {name: "Troye Sivan", cat: "Pop Barat", era: "2010s"},
+  {name: "Conan Gray", cat: "Pop Barat", era: "2020s"},
+  {name: "Gracie Abrams", cat: "Pop Barat", era: "2020s"},
+  {name: "Tate McRae", cat: "Pop Barat", era: "2020s"},
+  {name: "Reneé Rapp", cat: "Pop Barat", era: "2020s"},
+  {name: "Madison Beer", cat: "Pop Barat", era: "2020s"},
+  {name: "Bebe Rexha", cat: "Pop Barat", era: "2010s"},
+  {name: "Ava Max", cat: "Pop Barat", era: "2020s"},
+  {name: "Zara Larsson", cat: "Pop Barat", era: "2010s"},
+  {name: "Anne-Marie", cat: "Pop Barat", era: "2010s"},
+  {name: "Ellie Goulding", cat: "Pop Barat", era: "2010s"},
+  {name: "Sia", cat: "Pop Barat", era: "2010s"},
+  {name: "Pink", cat: "Pop Barat", era: "2000s"},
+  {name: "Britney Spears", cat: "Pop Barat", era: "2000s"},
+  {name: "Christina Aguilera", cat: "Pop Barat", era: "2000s"},
+  {name: "Justin Timberlake", cat: "Pop Barat", era: "2000s"},
+  {name: "Gwen Stefani", cat: "Pop Barat", era: "2000s"},
+  {name: "Avril Lavigne", cat: "Pop Barat", era: "2000s"},
+  {name: "Kelly Clarkson", cat: "Pop Barat", era: "2000s"},
+  {name: "Nelly Furtado", cat: "Pop Barat", era: "2000s"},
+  {name: "Fergie", cat: "Pop Barat", era: "2000s"},
+  {name: "Maroon 5", cat: "Pop Barat", era: "2010s"},
+  {name: "OneRepublic", cat: "Pop Barat", era: "2010s"},
+  {name: "Imagine Dragons", cat: "Pop Barat", era: "2010s"},
+  {name: "Coldplay", cat: "Pop Barat", era: "2000s"},
+  {name: "The 1975", cat: "Pop Barat", era: "2010s"},
+  {name: "LANY", cat: "Pop Barat", era: "2010s"},
+  {name: "Lauv", cat: "Pop Barat", era: "2010s"},
+  {name: "Jeremy Zucker", cat: "Pop Barat", era: "2010s"},
+  {name: "keshi", cat: "Pop Barat", era: "2020s"},
+  {name: "Joji", cat: "Pop Barat", era: "2020s"},
+  {name: "NIKI", cat: "Pop Barat", era: "2020s"},
+  {name: "Rich Brian", cat: "Pop Barat", era: "2010s"},
+  {name: "Stephanie Poetri", cat: "Pop Barat", era: "2020s"},
+  {name: "Bazzi", cat: "Pop Barat", era: "2010s"},
+  {name: "Alec Benjamin", cat: "Pop Barat", era: "2010s"},
+  {name: "Lewis Capaldi", cat: "Pop Barat", era: "2020s"},
+  {name: "James Arthur", cat: "Pop Barat", era: "2010s"},
+  {name: "Calum Scott", cat: "Pop Barat", era: "2010s"},
+  {name: "John Mayer", cat: "Pop Barat", era: "2000s"},
+  {name: "Jason Mraz", cat: "Pop Barat", era: "2000s"},
+  {name: "Charli XCX", cat: "Pop Barat", era: "2020s"},
+  {name: "Carly Rae Jepsen", cat: "Pop Barat", era: "2010s"},
+  {name: "Kim Petras", cat: "Pop Barat", era: "2020s"},
+  {name: "Tove Lo", cat: "Pop Barat", era: "2010s"},
+  {name: "Marina", cat: "Pop Barat", era: "2010s"},
+  {name: "Florence Welch", cat: "Pop Barat", era: "2010s"},
+  {name: "Jessie J", cat: "Pop Barat", era: "2010s"},
+  {name: "Rita Ora", cat: "Pop Barat", era: "2010s"},
+  {name: "Little Mix", cat: "Pop Barat", era: "2010s"},
+  {name: "Fifth Harmony", cat: "Pop Barat", era: "2010s"},
+  {name: "Backstreet Boys", cat: "Pop Barat", era: "90s"},
+  {name: "NSYNC", cat: "Pop Barat", era: "90s"},
+
+  // --- 3. HIP-HOP / RAP (75 Artis) ---
+  {name: "Drake", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Kendrick Lamar", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Kanye West", cat: "Hip-Hop/Rap", era: "2000s"},
+  {name: "Travis Scott", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Eminem", cat: "Hip-Hop/Rap", era: "2000s"},
+  {name: "J. Cole", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Nicki Minaj", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Cardi B", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Megan Thee Stallion", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Doja Cat", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Ice Spice", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Post Malone", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Tyler The Creator", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "ASAP Rocky", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Playboi Carti", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Lil Uzi Vert", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Future", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Metro Boomin", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "21 Savage", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Young Thug", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Gunna", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Lil Baby", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Lil Wayne", cat: "Hip-Hop/Rap", era: "2000s"},
+  {name: "Jay-Z", cat: "Hip-Hop/Rap", era: "90s"},
+  {name: "Nas", cat: "Hip-Hop/Rap", era: "90s"},
+  {name: "Snoop Dogg", cat: "Hip-Hop/Rap", era: "90s"},
+  {name: "Dr. Dre", cat: "Hip-Hop/Rap", era: "90s"},
+  {name: "50 Cent", cat: "Hip-Hop/Rap", era: "2000s"},
+  {name: "Ice Cube", cat: "Hip-Hop/Rap", era: "90s"},
+  {name: "Tupac Shakur", cat: "Hip-Hop/Rap", era: "90s"},
+  {name: "Notorious BIG", cat: "Hip-Hop/Rap", era: "90s"},
+  {name: "XXXTENTACION", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Juice WRLD", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Lil Peep", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Pop Smoke", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Mac Miller", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Wiz Khalifa", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Kid Cudi", cat: "Hip-Hop/Rap", era: "2000s"},
+  {name: "Childish Gambino", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Chance The Rapper", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Logic", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "NF", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Jack Harlow", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Central Cee", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Stormzy", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Skepta", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Dave", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Little Simz", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "JID", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Denzel Curry", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Vince Staples", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Earl Sweatshirt", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Joey Badass", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Pusha T", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Rick Ross", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Meek Mill", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Big Sean", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Tyga", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Rae Sremmurd", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Migos", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Quavo", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Offset", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Takeoff", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Kodak Black", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Roddy Ricch", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "DaBaby", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Polo G", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Lil Durk", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "King Von", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Trippie Redd", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Ski Mask", cat: "Hip-Hop/Rap", era: "2010s"},
+  {name: "Yeat", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Ken Carson", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Destroy Lonely", cat: "Hip-Hop/Rap", era: "2020s"},
+  {name: "Don Toliver", cat: "Hip-Hop/Rap", era: "2020s"},
+
+  // --- 4. R&B / SOUL (45 Artis) ---
+  {name: "The Weeknd", cat: "R&B/Soul", era: "2010s"},
+  {name: "Frank Ocean", cat: "R&B/Soul", era: "2010s"},
+  {name: "SZA", cat: "R&B/Soul", era: "2020s"},
+  {name: "Daniel Caesar", cat: "R&B/Soul", era: "2010s"},
+  {name: "H.E.R.", cat: "R&B/Soul", era: "2010s"},
+  {name: "Summer Walker", cat: "R&B/Soul", era: "2020s"},
+  {name: "Bryson Tiller", cat: "R&B/Soul", era: "2010s"},
+  {name: "Khalid", cat: "R&B/Soul", era: "2010s"},
+  {name: "Brent Faiyaz", cat: "R&B/Soul", era: "2020s"},
+  {name: "Giveon", cat: "R&B/Soul", era: "2020s"},
+  {name: "6LACK", cat: "R&B/Soul", era: "2010s"},
+  {name: "PARTYNEXTDOOR", cat: "R&B/Soul", era: "2010s"},
+  {name: "Tory Lanez", cat: "R&B/Soul", era: "2010s"},
+  {name: "Chris Brown", cat: "R&B/Soul", era: "2000s"},
+  {name: "Usher", cat: "R&B/Soul", era: "2000s"},
+  {name: "Ne-Yo", cat: "R&B/Soul", era: "2000s"},
+  {name: "Alicia Keys", cat: "R&B/Soul", era: "2000s"},
+  {name: "John Legend", cat: "R&B/Soul", era: "2000s"},
+  {name: "Jhene Aiko", cat: "R&B/Soul", era: "2010s"},
+  {name: "Kehlani", cat: "R&B/Soul", era: "2010s"},
+  {name: "Tinashe", cat: "R&B/Soul", era: "2010s"},
+  {name: "Victoria Monet", cat: "R&B/Soul", era: "2020s"},
+  {name: "Chloe Bailey", cat: "R&B/Soul", era: "2020s"},
+  {name: "Halle Bailey", cat: "R&B/Soul", era: "2020s"},
+  {name: "Kali Uchis", cat: "R&B/Soul", era: "2020s"},
+  {name: "Jorja Smith", cat: "R&B/Soul", era: "2010s"},
+  {name: "Ella Mai", cat: "R&B/Soul", era: "2010s"},
+  {name: "Mahalia", cat: "R&B/Soul", era: "2020s"},
+  {name: "Sno Aalegra", cat: "R&B/Soul", era: "2010s"},
+  {name: "Ari Lennox", cat: "R&B/Soul", era: "2020s"},
+  {name: "Lucky Daye", cat: "R&B/Soul", era: "2020s"},
+  {name: "Anderson Paak", cat: "R&B/Soul", era: "2010s"},
+  {name: "Silk Sonic", cat: "R&B/Soul", era: "2020s"},
+  {name: "Miguel", cat: "R&B/Soul", era: "2010s"},
+  {name: "Trey Songz", cat: "R&B/Soul", era: "2000s"},
+  {name: "Jeremih", cat: "R&B/Soul", era: "2010s"},
+  {name: "August Alsina", cat: "R&B/Soul", era: "2010s"},
+  {name: "Jacquees", cat: "R&B/Soul", era: "2010s"},
+  {name: "Kiana Lede", cat: "R&B/Soul", era: "2020s"},
+  {name: "PinkPantheress", cat: "R&B/Soul", era: "2020s"},
+  {name: "Steve Lacy", cat: "R&B/Soul", era: "2020s"},
+  {name: "Omar Apollo", cat: "R&B/Soul", era: "2020s"},
+  {name: "Solange", cat: "R&B/Soul", era: "2010s"},
+  {name: "Erykah Badu", cat: "R&B/Soul", era: "90s"},
+  {name: "Lauryn Hill", cat: "R&B/Soul", era: "90s"},
+
+  // --- 5. ROCK / METAL / ALTERNATIF (65 Artis) ---
+  {name: "Linkin Park", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Nirvana", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Radiohead", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Arctic Monkeys", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Green Day", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "My Chemical Romance", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Paramore", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Fall Out Boy", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Panic At The Disco", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Twenty One Pilots", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Blink-182", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Sum 41", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Simple Plan", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Muse", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Foo Fighters", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Red Hot Chili Peppers", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Oasis", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Blur", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Gorillaz", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Tame Impala", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "The Strokes", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "The Killers", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Kings of Leon", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "The Neighbourhood", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Cigarettes After Sex", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Chase Atlantic", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Glass Animals", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Bastille", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Foster The People", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Two Door Cinema Club", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Vampire Weekend", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Metallica", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Slipknot", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Avenged Sevenfold", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Bring Me The Horizon", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "System Of A Down", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Korn", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Deftones", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Tool", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Rage Against The Machine", cat: "Rock/Metal/Alternatif", era: "90s"},
+  {name: "Evanescence", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Three Days Grace", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Breaking Benjamin", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Disturbed", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Bullet For My Valentine", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Architects", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Bad Omens", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Sleep Token", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Spiritbox", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Polyphia", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Pierce The Veil", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Sleeping With Sirens", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "All Time Low", cat: "Rock/Metal/Alternatif", era: "2000s"},
+  {name: "Neck Deep", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "The Story So Far", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Turnstile", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Maneskin", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Royal Blood", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Nothing But Thieves", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Cage The Elephant", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "alt-J", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Bon Iver", cat: "Rock/Metal/Alternatif", era: "2010s"},
+  {name: "Phoebe Bridgers", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Mitski", cat: "Rock/Metal/Alternatif", era: "2020s"},
+  {name: "Clairo", cat: "Rock/Metal/Alternatif", era: "2020s"},
+
+  // --- 6. EDM / DJ (55 Artis) ---
+  {name: "Martin Garrix", cat: "EDM/DJ", era: "2010s"},
+  {name: "Alan Walker", cat: "EDM/DJ", era: "2010s"},
+  {name: "Marshmello", cat: "EDM/DJ", era: "2010s"},
+  {name: "Calvin Harris", cat: "EDM/DJ", era: "2010s"},
+  {name: "David Guetta", cat: "EDM/DJ", era: "2010s"},
+  {name: "Avicii", cat: "EDM/DJ", era: "2010s"},
+  {name: "Zedd", cat: "EDM/DJ", era: "2010s"},
+  {name: "Kygo", cat: "EDM/DJ", era: "2010s"},
+  {name: "The Chainsmokers", cat: "EDM/DJ", era: "2010s"},
+  {name: "Skrillex", cat: "EDM/DJ", era: "2010s"},
+  {name: "Diplo", cat: "EDM/DJ", era: "2010s"},
+  {name: "Major Lazer", cat: "EDM/DJ", era: "2010s"},
+  {name: "DJ Snake", cat: "EDM/DJ", era: "2010s"},
+  {name: "Tiesto", cat: "EDM/DJ", era: "2000s"},
+  {name: "Armin van Buuren", cat: "EDM/DJ", era: "2000s"},
+  {name: "Hardwell", cat: "EDM/DJ", era: "2010s"},
+  {name: "Afrojack", cat: "EDM/DJ", era: "2010s"},
+  {name: "Steve Aoki", cat: "EDM/DJ", era: "2010s"},
+  {name: "Dimitri Vegas", cat: "EDM/DJ", era: "2010s"},
+  {name: "Like Mike", cat: "EDM/DJ", era: "2010s"},
+  {name: "Alesso", cat: "EDM/DJ", era: "2010s"},
+  {name: "Swedish House Mafia", cat: "EDM/DJ", era: "2010s"},
+  {name: "Axwell", cat: "EDM/DJ", era: "2010s"},
+  {name: "Sebastian Ingrosso", cat: "EDM/DJ", era: "2010s"},
+  {name: "Don Diablo", cat: "EDM/DJ", era: "2010s"},
+  {name: "Oliver Heldens", cat: "EDM/DJ", era: "2010s"},
+  {name: "Nicky Romero", cat: "EDM/DJ", era: "2010s"},
+  {name: "R3HAB", cat: "EDM/DJ", era: "2010s"},
+  {name: "KSHMR", cat: "EDM/DJ", era: "2010s"},
+  {name: "W&W", cat: "EDM/DJ", era: "2010s"},
+  {name: "Illenium", cat: "EDM/DJ", era: "2010s"},
+  {name: "Porter Robinson", cat: "EDM/DJ", era: "2010s"},
+  {name: "Madeon", cat: "EDM/DJ", era: "2010s"},
+  {name: "Flume", cat: "EDM/DJ", era: "2010s"},
+  {name: "ODESZA", cat: "EDM/DJ", era: "2010s"},
+  {name: "San Holo", cat: "EDM/DJ", era: "2010s"},
+  {name: "Gryffin", cat: "EDM/DJ", era: "2010s"},
+  {name: "Said The Sky", cat: "EDM/DJ", era: "2010s"},
+  {name: "Seven Lions", cat: "EDM/DJ", era: "2010s"},
+  {name: "SLANDER", cat: "EDM/DJ", era: "2010s"},
+  {name: "Excision", cat: "EDM/DJ", era: "2010s"},
+  {name: "Subtronics", cat: "EDM/DJ", era: "2020s"},
+  {name: "Rezz", cat: "EDM/DJ", era: "2010s"},
+  {name: "deadmau5", cat: "EDM/DJ", era: "2000s"},
+  {name: "Daft Punk", cat: "EDM/DJ", era: "2000s"},
+  {name: "Justice", cat: "EDM/DJ", era: "2000s"},
+  {name: "Disclosure", cat: "EDM/DJ", era: "2010s"},
+  {name: "Fred again", cat: "EDM/DJ", era: "2020s"},
+  {name: "Peggy Gou", cat: "EDM/DJ", era: "2020s"},
+  {name: "Charlotte de Witte", cat: "EDM/DJ", era: "2020s"},
+  {name: "Amelie Lens", cat: "EDM/DJ", era: "2020s"},
+  {name: "Fisher", cat: "EDM/DJ", era: "2010s"},
+  {name: "Dom Dolla", cat: "EDM/DJ", era: "2020s"},
+  {name: "John Summit", cat: "EDM/DJ", era: "2020s"},
+  {name: "Anyma", cat: "EDM/DJ", era: "2020s"},
+
+  // --- 7. POP INDONESIA (75 Artis) ---
+  {name: "Tulus", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Raisa", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Isyana Sarasvati", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Afgan", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Rizky Febian", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Mahalini", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Lyodra", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Tiara Andini", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Ziva Magnolya", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Keisya Levronka", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Nadin Amizah", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Bernadya", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Sal Priadi", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Ardhito Pramono", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Pamungkas", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Fiersa Besari", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Yura Yunita", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Feby Putri", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Dere", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Idgitaf", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Ghea Indrawari", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Fabio Asher", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Budi Doremi", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Virgoun", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Anji", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Judika", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Sammy Simorangkir", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Cakra Khan", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Marcell Siahaan", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Glenn Fredly", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Once Mekel", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Ari Lasso", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Rossa", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Bunga Citra Lestari", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Agnez Mo", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Maudy Ayunda", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Gita Gutawa", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Sherina Munaf", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Vidi Aldiano", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Nino Kayam", cat: "Pop Indonesia", era: "2010s"},
+  {name: "RAN", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Maliq & D'Essentials", cat: "Pop Indonesia", era: "2000s"},
+  {name: "HIVI!", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Juicy Luicy", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Kahitna", cat: "Pop Indonesia", era: "90s"},
+  {name: "Yovie & Nuno", cat: "Pop Indonesia", era: "2000s"},
+  {name: "ADA Band", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Kerispatih", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Samsons", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Ungu", cat: "Pop Indonesia", era: "2000s"},
+  {name: "d'Masiv", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Nidji", cat: "Pop Indonesia", era: "2000s"},
+  {name: "Geisha", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Armada", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Wali", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Last Child", cat: "Pop Indonesia", era: "2010s"},
+  {name: "For Revenge", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Vierratale", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Project Pop", cat: "Pop Indonesia", era: "2000s"},
+  {name: "GAC", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Jaz Hayat", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Andmesh Kamaleng", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Marion Jola", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Brisia Jodie", cat: "Pop Indonesia", era: "2010s"},
+  {name: "Kaleb J", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Gangga", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Adrian Khalif", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Rony Parulian", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Salma Salsabil", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Nabila Taqiyyah", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Anggis Devaki", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Nyoman Paul", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Stevan Pasaribu", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Awdella", cat: "Pop Indonesia", era: "2020s"},
+  {name: "Meiska", cat: "Pop Indonesia", era: "2020s"},
+
+  // --- 8. DANGDUT / INDIE / ROCK INDONESIA (45 Artis) ---
+  {name: "Dewa 19", cat: "Dangdut/Indie/Rock Indonesia", era: "90s"},
+  {name: "Sheila on 7", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "NOAH", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Peterpan", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Slank", cat: "Dangdut/Indie/Rock Indonesia", era: "90s"},
+  {name: "Padi", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Gigi", cat: "Dangdut/Indie/Rock Indonesia", era: "90s"},
+  {name: "Boomerang", cat: "Dangdut/Indie/Rock Indonesia", era: "90s"},
+  {name: "Jamrud", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Kotak", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Burgerkill", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Seringai", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "DeadSquad", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Superman Is Dead", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Endank Soekamti", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Pee Wee Gaskins", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Rocket Rockers", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Killing Me Inside", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Hindia", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: ".Feast", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "Fourtwnty", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Payung Teduh", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Efek Rumah Kaca", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Barasuara", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Reality Club", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "The Adams", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "White Shoes & The Couples Company", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Danilla", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Stars and Rabbit", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Dialog Dini Hari", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Banda Neira", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Nosstress", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Perunggu", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "Lomba Sihir", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "Denny Caknan", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "Happy Asmara", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "Ndarboy Genk", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "Guyon Waton", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "Via Vallen", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Nella Kharisma", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Ayu Ting Ting", cat: "Dangdut/Indie/Rock Indonesia", era: "2010s"},
+  {name: "Lesti Kejora", cat: "Dangdut/Indie/Rock Indonesia", era: "2020s"},
+  {name: "Inul Daratista", cat: "Dangdut/Indie/Rock Indonesia", era: "2000s"},
+  {name: "Rhoma Irama", cat: "Dangdut/Indie/Rock Indonesia", era: "Classic"},
+  {name: "Didi Kempot", cat: "Dangdut/Indie/Rock Indonesia", era: "Classic"},
+
+  // --- 9. J-POP / ANIME SINGER (35 Artis) ---
+  {name: "YOASOBI", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Ado", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Kenshi Yonezu", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "LiSA", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "Aimer", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "Fujii Kaze", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Official HIGE DANdism", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "King Gnu", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Eve", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Yorushika", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "ZUTOMAYO", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Vaundy", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "imase", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Creepy Nuts", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Mrs. GREEN APPLE", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "RADWIMPS", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "ONE OK ROCK", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "BABYMETAL", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "Perfume", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "Kyary Pamyu Pamyu", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "Hikaru Utada", cat: "J-Pop/Anime Singer", era: "2000s"},
+  {name: "Ayumi Hamasaki", cat: "J-Pop/Anime Singer", era: "2000s"},
+  {name: "Namie Amuro", cat: "J-Pop/Anime Singer", era: "2000s"},
+  {name: "Kensuke Ushio", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Hiroyuki Sawano", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "ReoNa", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "milet", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "ClariS", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "EGOIST", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "FLOW", cat: "J-Pop/Anime Singer", era: "2000s"},
+  {name: "ASIAN KUNG-FU GENERATION", cat: "J-Pop/Anime Singer", era: "2000s"},
+  {name: "KANA-BOON", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "SPYAIR", cat: "J-Pop/Anime Singer", era: "2010s"},
+  {name: "Atarashii Gakko", cat: "J-Pop/Anime Singer", era: "2020s"},
+  {name: "Hatsune Miku", cat: "J-Pop/Anime Singer", era: "2010s"},
+
+  // --- 10. LATIN / AFROBEATS / LAINNYA (35 Artis) ---
+  {name: "Bad Bunny", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Shakira", cat: "Latin/Afrobeats/Lainnya", era: "2000s"},
+  {name: "J Balvin", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Karol G", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Rosalia", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Maluma", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Ozuna", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Daddy Yankee", cat: "Latin/Afrobeats/Lainnya", era: "2000s"},
+  {name: "Rauw Alejandro", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Peso Pluma", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Feid", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Anitta", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Becky G", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Luis Fonsi", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Enrique Iglesias", cat: "Latin/Afrobeats/Lainnya", era: "2000s"},
+  {name: "Ricky Martin", cat: "Latin/Afrobeats/Lainnya", era: "90s"},
+  {name: "Nicky Jam", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Sebastián Yatra", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Bizarrap", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Young Miko", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Burna Boy", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Wizkid", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Davido", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Rema", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Tems", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Ayra Starr", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Asake", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Ckay", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Tyla", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Amaarae", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Fireboy DML", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Omah Lay", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+  {name: "Black Coffee", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Stromae", cat: "Latin/Afrobeats/Lainnya", era: "2010s"},
+  {name: "Aya Nakamura", cat: "Latin/Afrobeats/Lainnya", era: "2020s"},
+
+  // --- 11. LEGENDA KLASIK (35 Artis) ---
+  {name: "Michael Jackson", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Queen", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Freddie Mercury", cat: "Legenda Klasik", era: "Classic"},
+  {name: "The Beatles", cat: "Legenda Klasik", era: "Classic"},
+  {name: "John Lennon", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Paul McCartney", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Elvis Presley", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Madonna", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Whitney Houston", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Celine Dion", cat: "Legenda Klasik", era: "90s"},
+  {name: "Mariah Carey", cat: "Legenda Klasik", era: "90s"},
+  {name: "Prince", cat: "Legenda Klasik", era: "Classic"},
+  {name: "David Bowie", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Elton John", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Stevie Wonder", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Bob Marley", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Led Zeppelin", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Pink Floyd", cat: "Legenda Klasik", era: "Classic"},
+  {name: "The Rolling Stones", cat: "Legenda Klasik", era: "Classic"},
+  {name: "AC/DC", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Guns N Roses", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Bon Jovi", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Aerosmith", cat: "Legenda Klasik", era: "Classic"},
+  {name: "U2", cat: "Legenda Klasik", era: "Classic"},
+  {name: "ABBA", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Bee Gees", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Frank Sinatra", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Aretha Franklin", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Marvin Gaye", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Amy Winehouse", cat: "Legenda Klasik", era: "2000s"},
+  {name: "George Michael", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Phil Collins", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Fleetwood Mac", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Chrisye", cat: "Legenda Klasik", era: "Classic"},
+  {name: "Iwan Fals", cat: "Legenda Klasik", era: "Classic"}
+];
+
+// Validasi & Deduplikasi Database saat aplikasi dimuat
+const ARTISTS_DB = (() => {
+  const seen = new Set();
+  const unique = [];
+  for (const item of RAW_ARTISTS) {
+    const key = item.name.toLowerCase().replace(/\s+/g, '');
+    if (!seen.has(key) && item.name.trim().length > 0) {
+      seen.add(key);
+      unique.push(item);
+    }
+  }
+  return unique;
+})();
+
+const ALL_CATEGORIES = [...new Set(ARTISTS_DB.map(a => a.cat))];
+
+/* ============================================================================
+   BAGIAN 2: KAMUS KATA TAMBAHAN (165+ KATA) & 28 POLA USERNAME
+   ============================================================================ */
+const EXTRA_WORDS = [
+  // Musik & Audio (45)
+  "vibes", "era", "stan", "soul", "wave", "studio", "tour", "lyric", "beat", "groove",
+  "melody", "rhythm", "echo", "bass", "vinyl", "chord", "tempo", "tune", "vocal", "remix",
+  "acoustic", "synth", "audio", "track", "album", "disc", "radio", "stereo", "sound", "pulse",
+  "harmony", "anthem", "chorus", "verse", "encore", "stage", "live", "unplugged", "tape", "mix",
+  "amp", "sonic", "note", "pitch", "frequency",
+  // Aesthetic & Cosmic (45)
+  "moon", "star", "nova", "aura", "velvet", "dream", "cloud", "mist", "glow", "spark",
+  "luna", "sol", "sky", "dusk", "dawn", "eclipse", "orbit", "galaxy", "nebula", "cosmos",
+  "ethereal", "pastel", "silk", "pearl", "crystal", "prism", "mirage", "haze", "breeze", "bloom",
+  "petal", "flora", "rain", "ocean", "tide", "amber", "ivory", "noir", "serene", "bliss",
+  "lullaby", "reverie", "zenith", "halo", "celestial",
+  // Gaming & Digital (40)
+  "gg", "pro", "mvp", "ace", "rush", "clutch", "pixel", "glitch", "cyber", "neon",
+  "byte", "code", "matrix", "nexus", "core", "prime", "ultra", "hyper", "alpha", "omega",
+  "shadow", "ghost", "phantom", "rogue", "knight", "sniper", "slayer", "titan", "apex", "vortex",
+  "blade", "storm", "frost", "blaze", "viper", "hawk", "wolf", "fox", "dragon", "zero",
+  // Vibes & Sosmed (35)
+  "club", "world", "zone", "hub", "space", "room", "archive", "diary", "files", "vault",
+  "daily", "mood", "core", "verse", "nation", "squad", "crew", "gang", "cult", "society",
+  "chronicles", "stories", "moments", "legacy", "icon", "muse", "legend", "starboy", "stargirl", "lover",
+  "soulmate", "bestie", "angel", "saint", "rebel"
+];
+
+// 28 Pola Struktur Berbeda
+const USERNAME_PATTERNS = [
+  (a, w, sep, custom) => `${a}${sep}${w}`,
+  (a, w, sep, custom) => `${w}${sep}${a}`,
+  (a, w, sep, custom) => `the${a}`,
+  (a, w, sep, custom) => `itz${a}`,
+  (a, w, sep, custom) => `iam${a}`,
+  (a, w, sep, custom) => `not${a}`,
+  (a, w, sep, custom) => `just${a}`,
+  (a, w, sep, custom) => `only${a}`,
+  (a, w, sep, custom) => `real${a}`,
+  (a, w, sep, custom) => `ur${a}`,
+  (a, w, sep, custom) => `${a}${sep}official`,
+  (a, w, sep, custom) => `${a}${sep}fan`,
+  (a, w, sep, custom) => `${a}${sep}era`,
+  (a, w, sep, custom) => `${a}${sep}mp3`,
+  (a, w, sep, custom) => `${a}${sep}wav`,
+  (a, w, sep, custom) => `${a}${sep}world`,
+  (a, w, sep, custom) => `${a}${sep}club`,
+  (a, w, sep, custom) => `${a}${sep}archive`,
+  (a, w, sep, custom) => `${a}${sep}vibes`,
+  (a, w, sep, custom) => `xX${a}Xx`,
+  (a, w, sep, custom) => `v${sep}${a}`,
+  (a, w, sep, custom) => `${getInitials(a)}${sep}${w}`,
+  (a, w, sep, custom) => `${shortenArtist(a)}${sep}${w}`,
+  (a, w, sep, custom) => `${w}${sep}${shortenArtist(a)}`,
+  (a, w, sep, custom) => custom ? `${custom}${sep}${a}` : `${a}${sep}hq`,
+  (a, w, sep, custom) => custom ? `${a}${sep}${custom}` : `${a}${sep}fm`,
+  (a, w, sep, custom) => custom ? `${custom}${sep}${shortenArtist(a)}${sep}${w}` : `${a}${sep}core`,
+  (a, w, sep, custom) => `${a}${sep}daily`
+];
+
+function getInitials(str) {
+  const clean = str.replace(/[^a-zA-Z0-9]/g, '');
+  return clean.slice(0, 2) || 'st';
+}
+
+function shortenArtist(str) {
+  const noVowels = str.charAt(0) + str.slice(1).replace(/[aeiou]/gi, '');
+  if (noVowels.length >= 3 && noVowels.length <= 6) return noVowels;
+  return str.slice(0, Math.min(5, str.length));
+}
+
+/* ============================================================================
+   BAGIAN 3: KONFIGURASI PLATFORM, UNICODE FONTS & DEKORASI (45+ SIMBOL)
+   ============================================================================ */
+const PLATFORM_RULES = {
+  instagram: { name: "Instagram", min: 3, max: 30, allowDot: true, allowUnderscore: true },
+  tiktok:    { name: "TikTok", min: 2, max: 24, allowDot: true, allowUnderscore: true },
+  roblox:    { name: "Roblox", min: 3, max: 20, allowDot: false, allowUnderscore: true },
+  discord:   { name: "Discord", min: 2, max: 32, allowDot: true, allowUnderscore: true },
+  youtube:   { name: "YouTube", min: 3, max: 30, allowDot: true, allowUnderscore: true },
+  twitter:   { name: "X / Twitter", min: 4, max: 15, allowDot: false, allowUnderscore: true },
+  freefire:  { name: "Free Fire", min: 3, max: 12, allowDot: false, allowUnderscore: false },
+  mlbb:      { name: "Mobile Legends", min: 4, max: 20, allowDot: true, allowUnderscore: true },
+  minecraft: { name: "Minecraft", min: 3, max: 16, allowDot: false, allowUnderscore: true },
+  general:   { name: "Umum", min: 3, max: 30, allowDot: true, allowUnderscore: true }
+};
+
+// 48 Dekorasi Simbol & Emoji Estetik
+const DECORATIONS = [
+  ["✦ ", " ✦"], ["☾ ", " ☽"], ["♡ ", " ♡"], ["⋆ ˚｡⋆ ", " ⋆｡˚ ⋆"], ["꒰ ", " ꒱"],
+  ["𓆩 ", " 𓆪"], ["✧･ﾟ: * ", " *:･ﾟ✧"], ["★ ", " ★"], ["✿ ", " ✿"], ["❀ ", " ❀"],
+  ["⚡ ", " ⚡"], ["♛ ", " ♛"], ["❖ ", " ❖"], ["◈ ", " ◈"], ["☾⋆⁺₊⋆ ", " ⋆⁺₊⋆☽"],
+  ["˚ ༘♡ ⋆｡˚ ", " ˚｡⋆ ♡༘ ˚"], ["︵‿︵‿୨♡୧ ", " ୨♡୧‿︵‿︵"], ["「 ", " 」"], ["『 ", " 』"], ["【 ", " 】"],
+  ["《 ", " 》"], ["〈 ", " 〉"], ["〔 ", " 〕"], ["꧁ ", " ꧂"], ["༒ ", " ༒"],
+  ["ঔৣ☬ ", " ☬ঔৣ"], ["★彡 ", " 彡★"], ["•°¯`•• ", " ••´¯°•"], ["✩°｡⋆ ", " ⋆｡°✩"], ["♡‧₊˚ ", " ˚₊‧♡"],
+  ["✨ ", " ✨"], ["🎧 ", " 🎶"], ["🦋 ", " 🦋"], ["🌙 ", " 💫"], ["🔥 ", " 🔥"],
+  ["🖤 ", " ⛓️"], ["🌸 ", " 🎀"], ["🍓 ", " 🍰"], ["🪐 ", " 🚀"], ["👑 ", " 💎"],
+  ["🌊 ", " 🐚"], ["🕊️ ", " 🤍"], ["🧸 ", " 🤎"], ["🎮 ", " 👾"], ["🥀 ", " 🕯️"],
+  ["⚡ ", " 💀"], ["彡 ", " 彡"], ["✦•┈๑⋅⋯ ", " ⋯⋅๑┈•✦"]
+];
+
+// Peta Konversi Unicode Font
+const UNICODE_MAPS = {
+  smallcaps: { a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ꜰ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'ǫ',r:'ʀ',s:'ꜱ',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ' },
+  bold: { A:'𝐀',B:'𝐁',C:'𝐂',D:'𝐃',E:'𝐄',F:'𝐅',G:'𝐆',H:'𝐇',I:'𝐈',J:'𝐉',K:'𝐊',L:'𝐋',M:'𝐌',N:'𝐍',O:'𝐎',P:'𝐏',Q:'𝐐',R:'𝐑',S:'𝐒',T:'𝐓',U:'𝐔',V:'𝐕',W:'𝐖',X:'𝐗',Y:'𝐘',Z:'𝐙',a:'𝐚',b:'𝐛',c:'𝐜',d:'𝐝',e:'𝐞',f:'𝐟',g:'𝐠',h:'𝐡',i:'𝐢',j:'𝐣',k:'𝐤',l:'𝐥',m:'𝐦',n:'𝐧',o:'𝐨',p:'𝐩',q:'𝐪',r:'𝐫',s:'𝐬',t:'𝐭',u:'𝐮',v:'𝐯',w:'𝐰',x:'𝐱',y:'𝐲',z:'𝐳' },
+  sansbold: { A:'𝗔',B:'𝗕',C:'𝗖',D:'𝗗',E:'𝗘',F:'𝗙',G:'𝗚',H:'𝗛',I:'𝗜',J:'𝗝',K:'𝗞',L:'𝗟',M:'𝗠',N:'𝗡',O:'𝗢',P:'𝗣',Q:'𝗤',R:'𝗥',S:'𝗦',T:'𝗧',U:'𝗨',V:'𝗩',W:'𝗪',X:'𝗫',Y:'𝗬',Z:'𝗭',a:'𝗮',b:'𝗯',c:'𝗰',d:'𝗱',e:'𝗲',f:'𝗳',g:'𝗴',h:'𝗵',i:'𝗶',j:'𝗷',k:'𝗸',l:'𝗹',m:'𝗺',n:'𝗻',o:'𝗼',p:'𝗽',q:'𝗾',r:'𝗿',s:'𝘀',t:'𝘁',u:'𝘂',v:'𝘃',w:'𝘄',x:'𝘅',y:'𝘆',z:'𝘇' },
+  italic: { A:'𝘈',B:'𝘉',C:'𝘊',D:'𝘋',E:'𝘌',F:'𝘍',G:'𝘎',H:'𝘏',I:'𝘐',J:'𝘑',K:'𝘒',L:'𝘓',M:'𝘔',N:'𝘕',O:'𝘖',P:'𝘗',Q:'𝘘',R:'𝘙',S:'𝘚',T:'𝘛',U:'𝘜',V:'𝘝',W:'𝘞',X:'𝘟',Y:'𝘠',Z:'𝘡',a:'𝘢',b:'𝘣',c:'𝘤',d:'𝘥',e:'𝘦',f:'𝘧',g:'𝘨',h:'𝘩',i:'𝘪',j:'𝘫',k:'𝘬',l:'𝘭',m:'𝘮',n:'𝘯',o:'𝘰',p:'𝘱',q:'𝘲',r:'𝘳',s:'𝘴',t:'𝘵',u:'𝘶',v:'𝘷',w:'𝘸',x:'𝘹',y:'𝘺',z:'𝘻' },
+  script: { A:'𝓐',B:'𝓑',C:'𝓒',D:'𝓓',E:'𝓔',F:'𝓕',G:'𝓖',H:'𝓗',I:'𝓘',J:'𝓙',K:'𝓚',L:'𝓛',M:'𝓜',N:'𝓝',O:'𝓞',P:'𝓟',Q:'𝓠',R:'𝓡',S:'𝓢',T:'𝓣',U:'𝓤',V:'𝓥',W:'𝓦',X:'𝓧',Y:'𝓨',Z:'𝓩',a:'𝓪',b:'𝓫',c:'𝓬',d:'𝓭',e:'𝓮',f:'𝓯',g:'𝓰',h:'𝓱',i:'𝓲',j:'𝓳',k:'𝓴',l:'𝓵',m:'𝓶',n:'𝓷',o:'𝓸',p:'𝓹',q:'𝓺',r:'𝓻',s:'𝓼',t:'𝓽',u:'𝓾',v:'𝓿',w:'𝔀',x:'𝔁',y:'𝔂',z:'𝔃' },
+  gothic: { A:'𝔄',B:'𝔅',C:'ℭ',D:'𝔇',E:'𝔈',F:'𝔉',G:'𝔊',H:'ℌ',I:'ℑ',J:'𝔍',K:'𝔎',L:'𝔏',M:'𝔐',N:'𝔑',O:'𝔒',P:'𝔓',Q:'𝔔',R:'ℜ',S:'𝔖',T:'𝔗',U:'𝔘',V:'𝔙',W:'𝔚',X:'𝔛',Y:'𝔜',Z:'ℨ',a:'𝔞',b:'𝔟',c:'𝔠',d:'𝔡',e:'𝔢',f:'𝔣',g:'𝔤',h:'𝔥',i:'𝔦',j:'𝔧',k:'𝔨',l:'𝔩',m:'𝔪',n:'𝔫',o:'𝔬',p:'𝔭',q:'𝔮',r:'𝔯',s:'𝔰',t:'𝔱',u:'𝔲',v:'𝔳',w:'𝔴',x:'𝔵',y:'𝔶',z:'𝔷' },
+  doublestruck: { A:'𝔸',B:'𝔹',C:'ℂ',D:'𝔻',E:'𝔼',F:'𝔽',G:'𝔾',H:'ℍ',I:'𝕀',J:'𝕁',K:'𝕂',L:'𝕃',M:'𝕄',N:'ℕ',O:'𝕆',P:'ℙ',Q:'ℚ',R:'ℝ',S:'𝕊',T:'𝕋',U:'𝕌',V:'𝕍',W:'𝕎',X:'𝕏',Y:'𝕐',Z:'ℤ',a:'𝕒',b:'𝕓',c:'𝕔',d:'𝕕',e:'𝕖',f:'𝕗',g:'𝕘',h:'𝕙',i:'𝕚',j:'𝕛',k:'𝕜',l:'𝕝',m:'𝕞',n:'𝕟',o:'𝕠',p:'𝕡',q:'𝕢',r:'𝕣',s:'𝕤',t:'𝕥',u:'𝕦',v:'𝕧',w:'𝕨',x:'𝕩',y:'𝕪',z:'𝕫' },
+  bubble: { A:'Ⓐ',B:'Ⓑ',C:'Ⓒ',D:'Ⓓ',E:'Ⓔ',F:'Ⓕ',G:'Ⓖ',H:'Ⓗ',I:'Ⓘ',J:'Ⓙ',K:'Ⓚ',L:'Ⓛ',M:'Ⓜ',N:'Ⓝ',O:'Ⓞ',P:'Ⓟ',Q:'Ⓠ',R:'Ⓡ',S:'Ⓢ',T:'Ⓣ',U:'Ⓤ',V:'Ⓥ',W:'Ⓦ',X:'Ⓧ',Y:'Ⓨ',Z:'Ⓩ',a:'ⓐ',b:'ⓑ',c:'ⓒ',d:'ⓓ',e:'ⓔ',f:'ⓕ',g:'ⓖ',h:'ⓗ',i:'ⓘ',j:'ⓙ',k:'ⓚ',l:'ⓛ',m:'ⓜ',n:'ⓝ',o:'ⓞ',p:'ⓟ',q:'ⓠ',r:'ⓡ',s:'ⓢ',t:'ⓣ',u:'ⓤ',v:'ⓥ',w:'ⓦ',x:'ⓧ',y:'ⓨ',z:'ⓩ' },
+  fullwidth: { A:'Ａ',B:'Ｂ',C:'Ｃ',D:'Ｄ',E:'Ｅ',F:'Ｆ',G:'Ｇ',H:'Ｈ',I:'Ｉ',J:'Ｊ',K:'Ｋ',L:'Ｌ',M:'Ｍ',N:'Ｎ',O:'Ｏ',P:'Ｐ',Q:'Ｑ',R:'Ｒ',S:'Ｓ',T:'Ｔ',U:'Ｕ',V:'Ｖ',W:'Ｗ',X:'Ｘ',Y:'Ｙ',Z:'Ｚ',a:'ａ',b:'ｂ',c:'ｃ',d:'ｄ',e:'ｅ',f:'ｆ',g:'ｇ',h:'ｈ',i:'ｉ',j:'ｊ',k:'ｋ',l:'ｌ',m:'ｍ',n:'ｎ',o:'ｏ',p:'ｐ',q:'ｑ',r:'ｒ',s:'ｓ',t:'ｔ',u:'ｕ',v:'ｖ',w:'ｗ',x:'ｘ',y:'ｙ',z:'ｚ' },
+  monospace: { A:'𝙰',B:'𝙱',C:'𝙲',D:'𝙳',E:'𝙴',F:'𝙵',G:'𝙶',H:'𝙷',I:'𝙸',J:'𝙹',K:'𝙺',L:'𝙻',M:'𝙼',N:'𝙽',O:'𝙾',P:'𝙿',Q:'𝚀',R:'𝚁',S:'𝚂',T:'𝚃',U:'𝚄',V:'𝚅',W:'𝚆',X:'𝚇',Y:'𝚈',Z:'𝚉',a:'𝚊',b:'𝚋',c:'𝚌',d:'𝚍',e:'𝚎',f:'𝚏',g:'𝚐',h:'𝚑',i:'𝚒',j:'𝚓',k:'𝚔',l:'𝚕',m:'𝚖',n:'𝚗',o:'𝚘',p:'𝚙',q:'𝚚',r:'𝚛',s:'𝚜',t:'𝚝',u:'𝚞',v:'𝚟',w:'𝚠',x:'𝚡',y:'𝚢',z:'𝚣' }
+};
+
+function convertUnicode(text, fontKey) {
+  if (!fontKey || fontKey === 'normal') return text;
+  const map = UNICODE_MAPS[fontKey];
+  if (!map) return text;
+  return text.split('').map(ch => {
+    if (fontKey === 'smallcaps') return map[ch.toLowerCase()] || ch;
+    return map[ch] || ch;
+  }).join('');
+}
+
+/* ============================================================================
+   BAGIAN 4: STATE MANAGEMENT & SAFE LOCALSTORAGE
+   ============================================================================ */
+const STORAGE_KEY = 'startag_app_state_v1';
+
+const defaultState = {
+  favorites: [],
+  history: [],
+  stats: { totalGenerated: 0, artistUsage: {} },
+  settings: {
+    theme: 'dark',
+    accent: '#8b5cf6',
+    fontSize: 1,
+    lang: 'id'
+  }
+};
+
+let appState = loadState();
+let sessionBaseNames = new Set(); // Anti-nama-kembar dalam satu sesi
+let currentUsernameResults = [];  // Array of { id, text, artist, cat, platform, locked }
+let currentDisplayResults = [];   // Array of { id, text, artist, style, locked }
+let selectedCategories = new Set(ALL_CATEGORIES);
+let forcedArtist = null;          // Jika user klik "Buat username dari artis ini"
+let explorePage = 1;
+const PAGE_SIZE = 30;
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        favorites: Array.isArray(parsed.favorites) ? parsed.favorites : [],
+        history: Array.isArray(parsed.history) ? parsed.history : [],
+        stats: parsed.stats || { totalGenerated: 0, artistUsage: {} },
+        settings: { ...defaultState.settings, ...(parsed.settings || {}) }
+      };
+    }
+  } catch (e) {
+    console.warn('localStorage tidak tersedia:', e);
+  }
+  return JSON.parse(JSON.stringify(defaultState));
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  } catch (e) {
+    console.warn('Gagal menyimpan ke localStorage:', e);
+  }
+  updateStatsUI();
+}
+
+/* ============================================================================
+   BAGIAN 5: MESIN GENERATOR ANTI-NAMA-KEMBAR
+   ============================================================================ */
+function sanitizeArtistForUsername(name) {
+  return name
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/&/g, 'n')
+    .replace(/[^a-zA-Z0-9]/g, '');
+}
+
+function applyLeetSpeak(str) {
+  return str
+    .replace(/a/gi, '4')
+    .replace(/e/gi, '3')
+    .replace(/o/gi, '0')
+    .replace(/s/gi, '5');
+}
+
+// Mengekstrak basis nama tanpa angka & simbol untuk mencegah duplikat kembar
+function getNormalizedBase(username) {
+  return username.toLowerCase().replace(/[^a-z]/g, '');
+}
+
+function validateUsername(username, platformKey, minLen, maxLen) {
+  const rule = PLATFORM_RULES[platformKey] || PLATFORM_RULES.general;
+  const effMin = Math.max(minLen, rule.min);
+  const effMax = Math.min(maxLen, rule.max);
+  if (username.length < effMin) return { valid: false, reason: `Min ${effMin} kar` };
+  if (username.length > effMax) return { valid: false, reason: `Maks ${effMax} kar` };
+  if (!rule.allowDot && username.includes('.')) return { valid: false, reason: `Tanpa titik` };
+  if (!rule.allowUnderscore && username.includes('_')) return { valid: false, reason: `Tanpa _` };
+  if (/^\.|\.$|\.\./.test(username)) return { valid: false, reason: `Titik invalid` };
+  return { valid: true, reason: `Valid (${username.length}/${effMax})` };
+}
+
+function getFilteredArtists() {
+  if (forcedArtist) return [forcedArtist];
+  const era = document.getElementById('eraSelect').value;
+  let pool = ARTISTS_DB.filter(a => selectedCategories.has(a.cat));
+  if (era !== 'ALL') {
+    const eraPool = pool.filter(a => a.era === era);
+    if (eraPool.length > 0) pool = eraPool;
+  }
+  return pool.length > 0 ? pool : ARTISTS_DB;
+}
+
+function generateSingleUniqueUsername(pool, usedArtistsInBatch, usedPatternsInBatch) {
+  const platformKey = document.getElementById('platformSelect').value;
+  const rule = PLATFORM_RULES[platformKey] || PLATFORM_RULES.general;
+  const minLen = parseInt(document.getElementById('minLenRange').value, 10);
+  const maxLen = parseInt(document.getElementById('maxLenRange').value, 10);
+  const allowNumbers = document.getElementById('optNumbers').checked;
+  const allowSeparators = document.getElementById('optSeparators').checked;
+  const forceLower = document.getElementById('optLowercase').checked;
+  const useLeet = document.getElementById('optLeet').checked;
+  const customRaw = document.getElementById('customWordInput').value.trim().replace(/[^a-zA-Z0-9]/g, '');
+
+  // Tentukan pemisah yang diizinkan platform & user
+  let seps = [''];
+  if (allowSeparators) {
+    if (rule.allowDot) seps.push('.');
+    if (rule.allowUnderscore) seps.push('_');
+  }
+
+  for (let attempt = 0; attempt < 60; attempt++) {
+    // Pilih artis yang belum dipakai di batch ini (jika pool cukup besar)
+    let artistObj = pool[Math.floor(Math.random() * pool.length)];
+    if (!forcedArtist && pool.length > 10 && usedArtistsInBatch.has(artistObj.name) && attempt < 30) {
+      continue;
+    }
+
+    // Pilih pola yang bervariasi
+    const patIdx = Math.floor(Math.random() * USERNAME_PATTERNS.length);
+    if (usedPatternsInBatch.has(patIdx) && attempt < 25) continue;
+
+    const word = EXTRA_WORDS[Math.floor(Math.random() * EXTRA_WORDS.length)];
+    const sep = seps[Math.floor(Math.random() * seps.length)];
+    const cleanArtist = sanitizeArtistForUsername(artistObj.name);
+    if (!cleanArtist) continue;
+
+    let candidate = USERNAME_PATTERNS[patIdx](cleanArtist, word, sep, customRaw);
+
+    // Aksen angka opsional (hanya 20% peluang, dan tidak pernah menjadi pembeda satu-satunya)
+    if (allowNumbers && Math.random() < 0.2) {
+      const accents = ['01', '07', '99', '24', '25', '77', '88', '13', '21'];
+      candidate += accents[Math.floor(Math.random() * accents.length)];
+    }
+
+    if (useLeet && Math.random() < 0.45) {
+      candidate = applyLeetSpeak(candidate);
+    }
+
+    if (forceLower) {
+      candidate = candidate.toLowerCase();
+    }
+
+    // Bersihkan karakter terlarang platform
+    if (!rule.allowDot) candidate = candidate.replace(/\./g, rule.allowUnderscore && allowSeparators ? '_' : '');
+    if (!rule.allowUnderscore) candidate = candidate.replace(/_/g, '');
+
+    // Pangkas jika terlalu panjang namun tetap menjaga struktur
+    const effMax = Math.min(maxLen, rule.max);
+    if (candidate.length > effMax) {
+      candidate = candidate.slice(0, effMax).replace(/[._]+$/, '');
+    }
+
+    const baseKey = getNormalizedBase(candidate);
+    if (baseKey.length < 3) continue;
+
+    // Cek aturan ANTI-NAMA-KEMBAR
+    if (!sessionBaseNames.has(baseKey)) {
+      sessionBaseNames.add(baseKey);
+      usedArtistsInBatch.add(artistObj.name);
+      usedPatternsInBatch.add(patIdx);
+      return {
+        id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        text: candidate,
+        artist: artistObj.name,
+        cat: artistObj.cat,
+        platform: platformKey,
+        locked: false
+      };
+    }
+  }
+
+  // Fallback jika sesi sudah sangat penuh
+  const fallbackArtist = pool[Math.floor(Math.random() * pool.length)];
+  const fallbackWord = EXTRA_WORDS[Math.floor(Math.random() * EXTRA_WORDS.length)];
+  const fallbackText = (sanitizeArtistForUsername(fallbackArtist.name) + fallbackWord).toLowerCase().slice(0, maxLen);
+  return {
+    id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    text: fallbackText,
+    artist: fallbackArtist.name,
+    cat: fallbackArtist.cat,
+    platform: platformKey,
+    locked: false
+  };
+}
+
+function generateUsernamesBatch() {
+  triggerHaptic();
+  const container = document.getElementById('usernameResultsContainer');
+
+  // Pertahankan item yang dikunci (locked)
+  const lockedItems = currentUsernameResults.filter(item => item.locked);
+  const needed = 10 - lockedItems.length;
+
+  // Tampilkan skeleton singkat
+  container.innerHTML = Array(Math.max(needed, 3)).fill('<div class="skeleton"></div>').join('');
+
+  setTimeout(() => {
+    const pool = getFilteredArtists();
+    const usedArtists = new Set(lockedItems.map(i => i.artist));
+    const usedPatterns = new Set();
+    const newResults = [...lockedItems];
+
+    for (let i = 0; i < needed; i++) {
+      const item = generateSingleUniqueUsername(pool, usedArtists, usedPatterns);
+      newResults.push(item);
+
+      // Update statistik & riwayat
+      appState.stats.totalGenerated++;
+      appState.stats.artistUsage[item.artist] = (appState.stats.artistUsage[item.artist] || 0) + 1;
+      addToHistory(item.text, 'Username', item.artist);
+    }
+
+    currentUsernameResults = newResults;
+    saveState();
+    renderUsernameResults();
+  }, 180);
+}
+
+/* ============================================================================
+   BAGIAN 6: MESIN GENERATOR DISPLAY NAME
+   ============================================================================ */
+const STYLE_WORDS = {
+  aesthetic: ["vibes", "velvet", "moonlight", "ethereal", "aura", "cloud", "serene", "dream", "bloom", "dusk"],
+  cute: ["mochi", "bunny", "peach", "honey", "berry", "angel", "kitten", "cupcake", "bubbly", "sweetie"],
+  dark: ["abyss", "shadow", "noir", "phantom", "eclipse", "venom", "raven", "midnight", "chaos", "void"],
+  elegan: ["royal", "luxe", "velours", "sovereign", "dynasty", "atelier", "monarch", "maison", "crown", "allure"],
+  gamer: ["slayer", "clutch", "sniper", "vortex", "apex", "phantom", "nexus", "prime", "titan", "storm"],
+  minimalis: ["", "hq", "fm", "log", "archive", "studio", "01", "core", "club", "space"],
+  kpop: ["sunbae", "maknae", "bias", "idol", "seoul", "eonni", "oppa", "starlight", "stage", "comeback"],
+  lucu: ["kentang", "rebahan", "santuy", "gemoy", "cilok", "boba", "ngantuk", "mager", "kocak", "gabut"]
+};
+
+function generateDisplayNamesBatch() {
+  triggerHaptic();
+  const container = document.getElementById('displayResultsContainer');
+  const lockedItems = currentDisplayResults.filter(item => item.locked);
+  const needed = 10 - lockedItems.length;
+
+  container.innerHTML = Array(Math.max(needed, 3)).fill('<div class="skeleton"></div>').join('');
+
+  setTimeout(() => {
+    const baseInput = document.getElementById('displayBaseInput').value.trim();
+    const style = document.getElementById('displayStyleSelect').value;
+    const fontKey = document.getElementById('unicodeFontSelect').value;
+    const useDeco = document.getElementById('optDecorations').checked;
+    const intensity = parseInt(document.getElementById('decoIntensityRange').value, 10);
+
+    const fontKeysList = Object.keys(UNICODE_MAPS);
+    const styleVocab = STYLE_WORDS[style] || STYLE_WORDS.aesthetic;
+    const newResults = [...lockedItems];
+    const usedInBatch = new Set(lockedItems.map(i => i.text));
+
+    for (let i = 0; i < needed; i++) {
+      const artistObj = ARTISTS_DB[Math.floor(Math.random() * ARTISTS_DB.length)];
+      const coreName = baseInput || artistObj.name;
+      const extra = styleVocab[Math.floor(Math.random() * styleVocab.length)];
+
+      // Variasi struktur teks dasar
+      let phrase = coreName;
+      const mode = i % 4;
+      if (mode === 1 && extra) phrase = `${coreName} ${extra}`;
+      else if (mode === 2 && extra) phrase = `${extra} ${coreName}`;
+      else if (mode === 3) phrase = coreName.split('').join(' ');
+
+      // Pilih font Unicode (jika "normal", campurkan beberapa gaya secara cerdas)
+      const chosenFont = fontKey === 'normal'
+        ? (i % 3 === 0 ? 'normal' : fontKeysList[Math.floor(Math.random() * fontKeysList.length)])
+        : fontKey;
+
+      let styledText = convertUnicode(phrase, chosenFont);
+
+      // Tambahkan dekorasi simbol jika aktif
+      if (useDeco) {
+        const deco = DECORATIONS[Math.floor(Math.random() * DECORATIONS.length)];
+        if (intensity === 1) {
+          styledText = `${deco[0].trim()} ${styledText}`;
+        } else if (intensity === 2) {
+          styledText = `${deco[0]}${styledText}${deco[1]}`;
+        } else {
+          const deco2 = DECORATIONS[Math.floor(Math.random() * DECORATIONS.length)];
+          styledText = `${deco[0]}${deco2[0].trim()} ${styledText} ${deco2[1].trim()}${deco[1]}`;
+        }
+      }
+
+      if (!usedInBatch.has(styledText)) {
+        usedInBatch.add(styledText);
+        newResults.push({
+          id: 'd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          text: styledText,
+          artist: baseInput || artistObj.name,
+          style: style,
+          locked: false
+        });
+        appState.stats.totalGenerated++;
+        addToHistory(styledText, 'Display Name', baseInput || artistObj.name);
+      }
+    }
+
+    currentDisplayResults = newResults;
+    saveState();
+    renderDisplayResults();
+
+    // Update pratinjau profil dengan hasil pertama
+    if (newResults.length > 0) {
+      updateProfileMockup(newResults[0].text, null);
+    }
+  }, 180);
+}
+
+function updateProfileMockup(displayName, username) {
+  if (displayName) {
+    document.getElementById('mockupDisplayName').textContent = displayName;
+    const firstChar = displayName.replace(/[^a-zA-Z0-9\u00C0-\u024F]/g, '').charAt(0) || '★';
+    document.getElementById('mockupAvatar').textContent = firstChar.toUpperCase();
+  }
+  if (username) {
+    document.getElementById('mockupUsername').textContent = '@' + username.replace(/^@/, '');
+  }
+}
+
+/* ============================================================================
+   BAGIAN 7: RENDERING UI & INTERAKSI KARTU
+   ============================================================================ */
+function isFavorited(text) {
+  return appState.favorites.some(f => f.text === text);
+}
+
+function toggleFavorite(text, type, meta) {
+  triggerHaptic();
+  const idx = appState.favorites.findIndex(f => f.text === text);
+  if (idx >= 0) {
+    appState.favorites.splice(idx, 1);
+    showToast('Dihapus dari favorit');
+  } else {
+    appState.favorites.unshift({
+      id: 'fav_' + Date.now(),
+      text,
+      type,
+      meta,
+      createdAt: new Date().toLocaleDateString('id-ID')
+    });
+    showToast('❤️ Disimpan ke favorit');
+  }
+  saveState();
+  renderUsernameResults();
+  renderDisplayResults();
+  renderFavorites();
+  renderDailyChallenge(false);
+}
+
+function copyToClipboard(text) {
+  triggerHaptic();
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast(`✓ Tersalin: ${text}`);
+  } catch (err) {
+    showToast('Gagal menyalin teks');
+  }
+  document.body.removeChild(ta);
+}
+
+function shareText(text) {
+  triggerHaptic();
+  if (navigator.share) {
+    navigator.share({
+      title: 'StarTag Identity',
+      text: `Cek ide nama keren dari StarTag: ${text}`
+    }).catch(() => {});
+  } else {
+    copyToClipboard(text);
+    showToast('✓ Tersalin (siap dibagikan)');
+  }
+}
+
+function renderUsernameResults() {
+  const container = document.getElementById('usernameResultsContainer');
+  if (currentUsernameResults.length === 0) {
+    container.innerHTML = `<div class="empty-state">Tekan tombol <strong>Generate 10 Username Unik</strong> di atas untuk memulai!</div>`;
+    return;
+  }
+
+  const minLen = parseInt(document.getElementById('minLenRange').value, 10);
+  const maxLen = parseInt(document.getElementById('maxLenRange').value, 10);
+  const platformKey = document.getElementById('platformSelect').value;
+
+  container.innerHTML = currentUsernameResults.map((item, idx) => {
+    const check = validateUsername(item.text, platformKey, minLen, maxLen);
+    const favActive = isFavorited(item.text) ? 'active-fav' : '';
+    const lockActive = item.locked ? 'active-lock' : '';
+    const cardLockedClass = item.locked ? 'locked' : '';
+
+    return `
+      <div class="result-card ${cardLockedClass}" style="animation-delay:${idx * 0.03}s">
+        <div class="result-info" onclick="updateProfileMockup(null, '${escapeHtml(item.text)}'); showToast('Dipasang ke pratinjau profil');">
+          <div class="result-text">${escapeHtml(item.text)}</div>
+          <div class="result-meta">
+            <span class="tag-pill">🎤 ${escapeHtml(item.artist)}</span>
+            <span class="${check.valid ? 'status-valid' : 'status-invalid'}">${check.reason}</span>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button class="btn-icon ${lockActive}" onclick="toggleLockUsername('${item.id}')" title="Kunci">
+            ${item.locked ? '🔒' : '🔓'}
+          </button>
+          <button class="btn-icon ${favActive}" onclick="toggleFavorite('${escapeJs(item.text)}', 'Username', '${escapeJs(item.artist)}')" title="Favorit">
+            ${favActive ? '❤️' : '🤍'}
+          </button>
+          <button class="btn-icon" onclick="copyToClipboard('${escapeJs(item.text)}')" title="Salin">📋</button>
+          <button class="btn-icon" onclick="shareText('${escapeJs(item.text)}')" title="Bagikan">📤</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleLockUsername(id) {
+  triggerHaptic();
+  const item = currentUsernameResults.find(i => i.id === id);
+  if (item) {
+    item.locked = !item.locked;
+    renderUsernameResults();
+  }
+}
+
+function renderDisplayResults() {
+  const container = document.getElementById('displayResultsContainer');
+  if (currentDisplayResults.length === 0) {
+    container.innerHTML = `<div class="empty-state">Tekan tombol <strong>Generate 10 Display Name</strong> untuk membuat nama profil estetik!</div>`;
+    return;
+  }
+
+  container.innerHTML = currentDisplayResults.map((item, idx) => {
+    const favActive = isFavorited(item.text) ? 'active-fav' : '';
+    const lockActive = item.locked ? 'active-lock' : '';
+
+    return `
+      <div class="result-card ${item.locked ? 'locked' : ''}" style="animation-delay:${idx * 0.03}s">
+        <div class="result-info" onclick="updateProfileMockup('${escapeJs(item.text)}', null); showToast('Pratinjau profil diperbarui');">
+          <div class="result-text" style="font-size:1.05rem;">${escapeHtml(item.text)}</div>
+          <div class="result-meta">
+            <span class="tag-pill">✨ ${escapeHtml(item.style)}</span>
+            <span class="tag-pill" style="cursor:pointer; color:var(--accent);" onclick="event.stopPropagation(); openPairModal('${escapeJs(item.text)}')">🔗 Pasangkan</span>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button class="btn-icon ${lockActive}" onclick="toggleLockDisplay('${item.id}')" title="Kunci">
+            ${item.locked ? '🔒' : '🔓'}
+          </button>
+          <button class="btn-icon ${favActive}" onclick="toggleFavorite('${escapeJs(item.text)}', 'Display Name', '${escapeJs(item.style)}')" title="Favorit">
+            ${favActive ? '❤️' : '🤍'}
+          </button>
+          <button class="btn-icon" onclick="copyToClipboard('${escapeJs(item.text)}')" title="Salin">📋</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleLockDisplay(id) {
+  triggerHaptic();
+  const item = currentDisplayResults.find(i => i.id === id);
+  if (item) {
+    item.locked = !item.locked;
+    renderDisplayResults();
+  }
+}
+
+/* ============================================================================
+   BAGIAN 8: FITUR PASANGKAN (PAIRING), TANTANGAN HARIAN, JELAJAH & FAVORIT
+   ============================================================================ */
+function openPairModal(displayName) {
+  triggerHaptic();
+  const sampleUser = currentUsernameResults[0]?.text || sanitizeArtistForUsername(displayName).toLowerCase().slice(0, 14) + '.vibes';
+  updateProfileMockup(displayName, sampleUser);
+
+  const html = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="font-size:1.1rem; font-weight:800;">🔗 Pasangan Identitas Serasi</h3>
+      <button class="btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <div class="card" style="background:var(--bg-tertiary);">
+      <div style="font-size:0.75rem; color:var(--text-secondary);">Display Name:</div>
+      <div style="font-size:1.1rem; font-weight:800; margin-bottom:10px;">${escapeHtml(displayName)}</div>
+      <div style="font-size:0.75rem; color:var(--text-secondary);">Username Pasangan:</div>
+      <div style="font-size:1rem; font-weight:700; color:var(--accent);">@${escapeHtml(sampleUser)}</div>
+    </div>
+    <div class="grid-2">
+      <button class="btn btn-primary" onclick="copyToClipboard('${escapeJs(displayName)} | @${escapeJs(sampleUser)}'); closeModal();">
+        📋 Salin Keduanya
+      </button>
+      <button class="btn btn-secondary" onclick="toggleFavorite('${escapeJs(displayName)} (@${escapeJs(sampleUser)})', 'Pasangan', 'Bundle'); closeModal();">
+        ❤️ Simpan Paket
+      </button>
+    </div>
+  `;
+  openModal(html);
+}
+
+// Tantangan Harian (Deterministik berdasarkan tanggal hari ini)
+let dailyIdeasCache = [];
+function getDailyArtist() {
+  const today = new Date();
+  const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  return ARTISTS_DB[seed % ARTISTS_DB.length];
+}
+
+function renderDailyChallenge(regenerate = true) {
+  const artist = getDailyArtist();
+  document.getElementById('dailyArtistName').textContent = artist.name;
+  document.getElementById('dailyArtistMeta').textContent = `${artist.cat} • Era ${artist.era}`;
+  document.getElementById('dailyDateBadge').textContent = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+
+  if (regenerate || dailyIdeasCache.length === 0) {
+    const clean = sanitizeArtistForUsername(artist.name).toLowerCase();
+    const shuffledWords = [...EXTRA_WORDS].sort(() => 0.5 - Math.random()).slice(0, 5);
+    dailyIdeasCache = [
+      `${clean}.${shuffledWords[0]}`,
+      `the${clean}`,
+      `${shuffledWords[1]}_${clean}`,
+      `${clean}.era`,
+      `itz${clean}.${shuffledWords[2]}`
+    ];
+  }
+
+  document.getElementById('dailyResultsList').innerHTML = dailyIdeasCache.map(uname => {
+    const fav = isFavorited(uname) ? 'active-fav' : '';
+    return `
+      <div class="result-card" style="padding:10px 12px; margin-bottom:8px;">
+        <div class="result-text" style="font-size:0.95rem; margin:0;">${escapeHtml(uname)}</div>
+        <div class="result-actions">
+          <button class="btn-icon ${fav}" style="width:34px; height:34px;" onclick="toggleFavorite('${escapeJs(uname)}', 'Harian', '${escapeJs(artist.name)}')">${fav ? '❤️' : '🤍'}</button>
+          <button class="btn-icon" style="width:34px; height:34px;" onclick="copyToClipboard('${escapeJs(uname)}')">📋</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Jelajah Artis
+function renderExploreList(resetPage = true) {
+  if (resetPage) explorePage = 1;
+  const query = document.getElementById('artistSearchInput').value.toLowerCase().trim();
+  const cat = document.getElementById('exploreCategoryFilter').value;
+
+  const filtered = ARTISTS_DB.filter(a => {
+    const matchCat = cat === 'ALL' || a.cat === cat;
+    const matchQuery = !query || a.name.toLowerCase().includes(query) || a.cat.toLowerCase().includes(query);
+    return matchCat && matchQuery;
+  });
+
+  const limit = explorePage * PAGE_SIZE;
+  const slice = filtered.slice(0, limit);
+
+  document.getElementById('exploreCountLabel').textContent = `Menampilkan ${slice.length} dari ${filtered.length} artis`;
+  document.getElementById('btnLoadMoreArtists').style.display = slice.length < filtered.length ? 'block' : 'none';
+
+  document.getElementById('artistListContainer').innerHTML = slice.map(a => `
+    <div class="artist-row">
+      <div>
+        <div style="font-weight:700; font-size:0.95rem;">${escapeHtml(a.name)}</div>
+        <div style="font-size:0.74rem; color:var(--text-secondary);">${escapeHtml(a.cat)} • ${escapeHtml(a.era)}</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="useArtistForGenerator('${escapeJs(a.name)}')">
+        ⚡ Buat Username
+      </button>
+    </div>
+  `).join('');
+}
+
+function useArtistForGenerator(artistName) {
+  const found = ARTISTS_DB.find(a => a.name === artistName);
+  if (found) {
+    forcedArtist = found;
+    document.getElementById('lockedArtistBadge').textContent = `🎯 ${found.name}`;
+    document.getElementById('btnClearForcedArtist').style.display = 'inline-flex';
+    switchTab('username');
+    generateUsernamesBatch();
+  }
+}
+
+// Favorit & Ekspor / Impor
+function renderFavorites() {
+  const container = document.getElementById('favoritesListContainer');
+  document.getElementById('favNavBadge').textContent = appState.favorites.length;
+
+  if (appState.favorites.length === 0) {
+    container.innerHTML = `<div class="empty-state">Belum ada nama favorit tersimpan. Tekan ikon 🤍 pada hasil untuk menyimpannya!</div>`;
+    return;
+  }
+
+  container.innerHTML = appState.favorites.map(fav => `
+    <div class="result-card">
+      <div class="result-info">
+        <div class="result-text">${escapeHtml(fav.text)}</div>
+        <div class="result-meta">
+          <span class="tag-pill">${escapeHtml(fav.type)}</span>
+          <span>${escapeHtml(fav.meta || '')}</span>
+        </div>
+      </div>
+      <div class="result-actions">
+        <button class="btn-icon" onclick="copyToClipboard('${escapeJs(fav.text)}')" title="Salin">📋</button>
+        <button class="btn-icon" onclick="shareText('${escapeJs(fav.text)}')" title="Bagikan">📤</button>
+        <button class="btn-icon active-fav" onclick="toggleFavorite('${escapeJs(fav.text)}', '', '')" title="Hapus">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function exportFavorites(format) {
+  if (appState.favorites.length === 0) {
+    showToast('Tidak ada favorit untuk diekspor');
+    return;
+  }
+  let content = '';
+  let mime = 'text/plain;charset=utf-8';
+  let filename = `startag-favorit.${format}`;
+
+  if (format === 'txt') {
+    content = appState.favorites.map(f => f.text).join('\n');
+  } else {
+    mime = 'text/csv;charset=utf-8';
+    content = 'Nama,Tipe,Keterangan,Tanggal\n' + appState.favorites.map(f =>
+      `"${f.text.replace(/"/g, '""')}","${f.type}","${(f.meta || '').replace(/"/g, '""')}","${f.createdAt || ''}"`
+    ).join('\n');
+  }
+
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✓ Berhasil ekspor ${filename}`);
+}
+
+function importFavoritesFromTxt(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const lines = e.target.result.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    let added = 0;
+    for (const line of lines) {
+      if (!isFavorited(line)) {
+        appState.favorites.unshift({
+          id: 'imp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          text: line,
+          type: 'Impor',
+          meta: 'File TXT',
+          createdAt: new Date().toLocaleDateString('id-ID')
+        });
+        added++;
+      }
+    }
+    saveState();
+    renderFavorites();
+    showToast(`✓ ${added} nama berhasil diimpor!`);
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================================
+   BAGIAN 9: RIWAYAT, STATISTIK, PENGATURAN & TENTANG (MODALS)
+   ============================================================================ */
+function addToHistory(text, type, artist) {
+  appState.history.unshift({
+    text,
+    type,
+    artist,
+    time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+  });
+  if (appState.history.length > 60) appState.history.pop();
+}
+
+function updateStatsUI() {
+  document.getElementById('uniqueArtistCounter').textContent = `Total artis unik: ${ARTISTS_DB.length}`;
+  document.getElementById('statGenerated').textContent = appState.stats.totalGenerated;
+  document.getElementById('statFavorites').textContent = appState.favorites.length;
+  document.getElementById('favNavBadge').textContent = appState.favorites.length;
+
+  let topArtist = '-';
+  let maxCount = 0;
+  for (const [name, count] of Object.entries(appState.stats.artistUsage)) {
+    if (count > maxCount) {
+      maxCount = count;
+      topArtist = name;
+    }
+  }
+  document.getElementById('statTopArtist').textContent = topArtist;
+}
+
+function openHistoryModal() {
+  const listHtml = appState.history.length === 0
+    ? `<div class="empty-state">Belum ada riwayat sesi ini.</div>`
+    : appState.history.map(h => `
+        <div class="result-card" style="padding:10px 12px;">
+          <div class="result-info">
+            <div class="result-text" style="font-size:0.92rem;">${escapeHtml(h.text)}</div>
+            <div class="result-meta"><span>${h.type}</span> • <span>${escapeHtml(h.artist)}</span> • <span>${h.time}</span></div>
+          </div>
+          <button class="btn-icon" style="width:34px; height:34px;" onclick="copyToClipboard('${escapeJs(h.text)}')">📋</button>
+        </div>
+      `).join('');
+
+  openModal(`
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="font-size:1.1rem; font-weight:800;">🕒 Riwayat Hasil (${appState.history.length})</h3>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="appState.history=[]; saveState(); openHistoryModal();">Hapus</button>
+        <button class="btn-icon" onclick="closeModal()">✕</button>
+      </div>
+    </div>
+    <div style="max-height:60vh; overflow-y:auto;">${listHtml}</div>
+  `);
+}
+
+function openAboutModal() {
+  openModal(`
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="font-size:1.1rem; font-weight:800;">ℹ️ Tentang StarTag</h3>
+      <button class="btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <div class="card" style="background:var(--bg-tertiary);">
+      <p style="font-size:0.9rem; margin-bottom:10px;">
+        <strong>StarTag – Artist Username & Display Name Generator</strong> adalah aplikasi pembuat identitas digital dengan database <strong>${ARTISTS_DB.length} artis unik</strong> serta algoritma anti-duplikat.
+      </p>
+      <div style="padding:12px; border-radius:10px; background:rgba(245, 158, 11, 0.14); border:1px solid rgba(245, 158, 11, 0.35); font-size:0.84rem;">
+        <strong>⚠️ Catatan & Ketentuan Penggunaan:</strong><br>
+        Nama artis, musisi, dan grup yang tercantum di dalam aplikasi ini digunakan <strong>hanya sebagai inspirasi kreatif</strong> (fan account, gaming tag, atau gaya estetik). Pengguna bertanggung jawab penuh untuk tidak menyamar sebagai artis asli (impersonation) maupun melanggar aturan masing-masing platform media sosial atau game.
+      </div>
+    </div>
+  `);
+}
+
+function openSettingsModal() {
+  const s = appState.settings;
+  const accents = ['#8b5cf6', '#ec4899', '#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+
+  openModal(`
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="font-size:1.1rem; font-weight:800;">⚙️ Pengaturan Aplikasi</h3>
+      <button class="btn-icon" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tema Tampilan</label>
+      <div class="grid-2" style="grid-template-columns: repeat(3, 1fr);">
+        <button class="btn btn-secondary btn-sm ${s.theme === 'dark' ? 'selected' : ''}" style="${s.theme==='dark'?'border-color:var(--accent);color:var(--accent);':''}" onclick="setTheme('dark')">🌙 Gelap</button>
+        <button class="btn btn-secondary btn-sm ${s.theme === 'amoled' ? 'selected' : ''}" style="${s.theme==='amoled'?'border-color:var(--accent);color:var(--accent);':''}" onclick="setTheme('amoled')">🖤 AMOLED</button>
+        <button class="btn btn-secondary btn-sm ${s.theme === 'light' ? 'selected' : ''}" style="${s.theme==='light'?'border-color:var(--accent);color:var(--accent);':''}" onclick="setTheme('light')">☀️ Terang</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Warna Aksen</label>
+      <div class="swatch-list">
+        ${accents.map(c => `<div class="swatch ${s.accent === c ? 'active' : ''}" style="background:${c};" onclick="setAccent('${c}')"></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Ukuran Huruf: ${Math.round(s.fontSize * 100)}%</label>
+      <input type="range" min="0.9" max="1.15" step="0.05" value="${s.fontSize}" style="width:100%;" onchange="setFontSize(this.value)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Bahasa Antarmuka</label>
+      <select class="select-field" onchange="setLanguage(this.value)">
+        <option value="id" ${s.lang === 'id' ? 'selected' : ''}>🇮🇩 Bahasa Indonesia</option>
+        <option value="en" ${s.lang === 'en' ? 'selected' : ''}>🇬🇧 English</option>
+      </select>
+    </div>
+
+    <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border-color);">
+      <button class="btn btn-secondary" style="width:100%; color:var(--danger); border-color:var(--danger-soft);" onclick="resetAllData()">
+        🗑️ Reset Semua Data & Favorit
+      </button>
+    </div>
+  `);
+}
+
+function setTheme(theme) {
+  appState.settings.theme = theme;
+  applySettings();
+  saveState();
+  openSettingsModal();
+}
+
+function setAccent(color) {
+  appState.settings.accent = color;
+  applySettings();
+  saveState();
+  openSettingsModal();
+}
+
+function setFontSize(scale) {
+  appState.settings.fontSize = parseFloat(scale);
+  applySettings();
+  saveState();
+  openSettingsModal();
+}
+
+const I18N = {
+  id: {
+    heroTitle: "Identitas Digital Ala Bintang",
+    heroDesc: "Buat username & display name estetik dari ratusan musisi dunia dan Indonesia tanpa nama kembar.",
+    statGen: "Nama Dibuat",
+    statFav: "Favorit",
+    statTop: "Artis Terfavorit",
+    quickUser: "Buat Username",
+    quickDisp: "Display Name",
+    dailyTitle: "Tantangan Harian",
+    navHome: "Beranda",
+    navUser: "Username",
+    navDisp: "Display",
+    navExplore: "Jelajah",
+    navFav: "Favorit"
+  },
+  en: {
+    heroTitle: "Star-Inspired Digital Identity",
+    heroDesc: "Generate aesthetic usernames & display names from 580+ global and Indonesian artists with zero duplicates.",
+    statGen: "Generated",
+    statFav: "Favorites",
+    statTop: "Top Artist",
+    quickUser: "Make Username",
+    quickDisp: "Display Name",
+    dailyTitle: "Daily Challenge",
+    navHome: "Home",
+    navUser: "Username",
+    navDisp: "Display",
+    navExplore: "Explore",
+    navFav: "Favorites"
+  }
+};
+
+function setLanguage(lang) {
+  appState.settings.lang = lang;
+  applySettings();
+  saveState();
+  openSettingsModal();
+}
+
+function applySettings() {
+  const s = appState.settings;
+  const root = document.documentElement;
+  root.classList.remove('theme-amoled', 'theme-light');
+  if (s.theme === 'amoled') root.classList.add('theme-amoled');
+  if (s.theme === 'light') root.classList.add('theme-light');
+
+  root.style.setProperty('--accent', s.accent);
+  root.style.setProperty('--accent-hover', s.accent);
+  root.style.setProperty('--font-scale', s.fontSize);
+
+  const dict = I18N[s.lang] || I18N.id;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.textContent = dict[key];
+  });
+}
+
+function resetAllData() {
+  appState = JSON.parse(JSON.stringify(defaultState));
+  sessionBaseNames.clear();
+  saveState();
+  applySettings();
+  renderFavorites();
+  closeModal();
+  showToast('✓ Semua data berhasil direset');
+}
+
+/* ============================================================================
+   BAGIAN 10: UTILITIES, NAVIGATION, RIPPLE & INITIALIZATION
+   ============================================================================ */
+function switchTab(tabName) {
+  triggerHaptic();
+  document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const targetView = document.getElementById(`tab-${tabName}`);
+  const targetNav = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+  if (targetView) targetView.classList.add('active');
+  if (targetNav) targetNav.classList.add('active');
+
+  if (tabName === 'favorites') renderFavorites();
+  if (tabName === 'explore') renderExploreList(false);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const box = document.getElementById('toastBox');
+  box.textContent = msg;
+  box.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => box.classList.remove('show'), 2200);
+}
+
+function triggerHaptic() {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(15); } catch (e) {}
+  }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escapeJs(str) {
+  return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+// Efek Ripple Android pada tombol
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn, .btn-icon, .nav-item');
+  if (!btn) return;
+  const circle = document.createElement('span');
+  const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+  const rect = btn.getBoundingClientRect();
+  circle.style.width = circle.style.height = `${diameter}px`;
+  circle.style.left = `${e.clientX - rect.left - diameter / 2}px`;
+  circle.style.top = `${e.clientY - rect.top - diameter / 2}px`;
+  circle.classList.add('ripple');
+  const existing = btn.querySelector('.ripple');
+  if (existing) existing.remove();
+  btn.appendChild(circle);
+});
+
+// Inisialisasi Aplikasi saat DOM siap
+window.addEventListener('DOMContentLoaded', () => {
+  applySettings();
+  updateStatsUI();
+
+  // Render kategori chips & dropdown jelajah
+  const chipsContainer = document.getElementById('categoryChips');
+  const exploreSelect = document.getElementById('exploreCategoryFilter');
+
+  ALL_CATEGORIES.forEach(cat => {
+    const chip = document.createElement('div');
+    chip.className = 'chip selected';
+    chip.textContent = cat;
+    chip.onclick = () => {
+      triggerHaptic();
+      if (selectedCategories.has(cat)) {
+        if (selectedCategories.size > 1) {
+          selectedCategories.delete(cat);
+          chip.classList.remove('selected');
+        } else {
+          showToast('Minimal pilih 1 kategori');
+        }
+      } else {
+        selectedCategories.add(cat);
+        chip.classList.add('selected');
+      }
+    };
+    chipsContainer.appendChild(chip);
+
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    exploreSelect.appendChild(opt);
+  });
+
+  // Pilih semua kategori
+  document.getElementById('catSelectAll').onclick = () => {
+    selectedCategories = new Set(ALL_CATEGORIES);
+    document.querySelectorAll('#categoryChips .chip').forEach(c => c.classList.add('selected'));
+    showToast('✓ Semua kategori aktif');
+  };
+
+  // Navigasi Bottom Bar
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => switchTab(item.getAttribute('data-tab')));
+  });
+
+  // Header Modals
+  document.getElementById('btnOpenHistory').onclick = openHistoryModal;
+  document.getElementById('btnOpenAbout').onclick = openAboutModal;
+  document.getElementById('btnOpenSettings').onclick = openSettingsModal;
+  document.getElementById('modalBackdrop').onclick = (e) => {
+    if (e.target.id === 'modalBackdrop') closeModal();
+  };
+
+  // Accordion Pengaturan Lanjutan
+  document.getElementById('toggleAdvOptions').onclick = () => {
+    const body = document.getElementById('advOptionsBody');
+    body.classList.toggle('open');
+    document.getElementById('advArrow').textContent = body.classList.contains('open') ? '▲' : '▼';
+  };
+
+  // Sliders & Platform sync
+  document.getElementById('minLenRange').oninput = (e) => {
+    document.getElementById('minLenVal').textContent = e.target.value;
+  };
+  document.getElementById('maxLenRange').oninput = (e) => {
+    document.getElementById('maxLenVal').textContent = e.target.value;
+  };
+  document.getElementById('platformSelect').onchange = (e) => {
+    const rule = PLATFORM_RULES[e.target.value];
+    if (rule) {
+      document.getElementById('maxLenRange').value = rule.max;
+      document.getElementById('maxLenVal').textContent = rule.max;
+      renderUsernameResults();
+    }
+  };
+
+  // Intensitas Dekorasi
+  document.getElementById('decoIntensityRange').oninput = (e) => {
+    const labels = { '1': 'Ringan', '2': 'Sedang', '3': 'Meriah' };
+    document.getElementById('decoIntensityLabel').textContent = labels[e.target.value];
+  };
+
+  // Tombol Reset Artis Terpilih dari Jelajah
+  document.getElementById('btnClearForcedArtist').onclick = () => {
+    forcedArtist = null;
+    document.getElementById('lockedArtistBadge').textContent = '';
+    document.getElementById('btnClearForcedArtist').style.display = 'none';
+    showToast('Mode acak artis diaktifkan kembali');
+  };
+
+  // Tombol Generate Utama
+  document.getElementById('btnGenerateUsernames').onclick = generateUsernamesBatch;
+  document.getElementById('btnGenerateDisplay').onclick = generateDisplayNamesBatch;
+
+  // Tantangan Harian
+  renderDailyChallenge(true);
+  document.getElementById('btnRefreshDaily').onclick = () => {
+    triggerHaptic();
+    renderDailyChallenge(true);
+  };
+
+  // Jelajah Artis
+  renderExploreList(true);
+  document.getElementById('artistSearchInput').oninput = () => renderExploreList(true);
+  document.getElementById('exploreCategoryFilter').onchange = () => renderExploreList(true);
+  document.getElementById('btnLoadMoreArtists').onclick = () => {
+    explorePage++;
+    renderExploreList(false);
+  };
+  document.getElementById('btnRandomArtistExplore').onclick = () => {
+    const rand = ARTISTS_DB[Math.floor(Math.random() * ARTISTS_DB.length)];
+    useArtistForGenerator(rand.name);
+  };
+
+  // Ekspor / Impor Favorit
+  document.getElementById('btnExportTxt').onclick = () => exportFavorites('txt');
+  document.getElementById('btnExportCsv').onclick = () => exportFavorites('csv');
+  document.getElementById('btnImportTxt').onclick = () => document.getElementById('importFileInput').click();
+  document.getElementById('importFileInput').onchange = (e) => {
+    importFavoritesFromTxt(e.target.files[0]);
+    e.target.value = '';
+  };
+
+  // Generate batch awal secara otomatis agar langsung siap pakai
+  generateUsernamesBatch();
+  generateDisplayNamesBatch();
+});
+</script>
+</body>
+</html>
